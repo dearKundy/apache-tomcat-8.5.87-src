@@ -1,17 +1,10 @@
 > 记录阅读 Tomcat 过程中需要的基础知识
 
+# 守护线程
+JDK中的守护线程（Daemon Thread）是一种在后台运行的线程，它的目的是为其他线程提供服务或执行低优先级的任务。当所有的非守护线程都结束时，JVM会自动退出，并且守护线程也会随之结束，而不管它是否执行完毕。
 
-# connector 核心参数
-- `acceptCount`
-    - `使用位置`：org/apache/tomcat/util/net/NioEndpoint.java:226
-    - `作用`：实质上就是 ServerSocket 的 backLog 参数。
-- `minSpareThreads`
-    - `使用位置`：org/apache/tomcat/util/net/AbstractEndpoint.java:1054
-    - `作用`：线程池的 corePoolSize 参数。【具体是什么线程池晚点告诉你】
-- `maxThreads`
-    - `使用位置`：org/apache/tomcat/util/net/AbstractEndpoint.java:1054
-    - `作用`：线程池的 maximumPoolSize 参数。【具体是什么线程池晚点告诉你】
-- `maxConnections`
-
-
-
+# JVM在什么情况下会退出
+- 所有`非守护线程`都已经结束，并且没有正在执行的非守护线程。
+- 显式调用了System.exit()方法。
+- OutOfMemoryError 或其他严重错误发生，导致JVM无法继续运行。
+- 操作系统强制终止了JVM进程，例如在Windows中使用任务管理器强制关闭JVM进程。
