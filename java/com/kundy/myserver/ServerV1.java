@@ -1,4 +1,4 @@
-package com.kundy.server;
+package com.kundy.myserver;
 
 import java.io.*;
 import java.net.InetAddress;

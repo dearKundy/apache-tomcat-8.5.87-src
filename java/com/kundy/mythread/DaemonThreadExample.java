@@ -1,4 +1,4 @@
-package com.kundy.zhread;
+package com.kundy.mythread;
 
 /**
  * 守护线程
