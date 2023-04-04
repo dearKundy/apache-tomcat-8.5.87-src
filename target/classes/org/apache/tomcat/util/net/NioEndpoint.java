@@ -627,6 +627,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
                         log.error(sm.getString("endpoint.nio.registerFail"), x);
                     }
                 } else {
+                    // keyFor方法提供了一种检索与可选择通道相关联的SelectionKey对象的方法，以便在需要时对通道进行操作。
                     final SelectionKey key = sc.keyFor(getSelector());
                     if (key == null) {
                         // The key was cancelled (e.g. due to socket closure)
@@ -719,7 +720,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel,SocketChannel> 
                             // 不阻塞，立马返回
                             keyCount = selector.selectNow();
                         } else {
-                            // 阻塞
+                            // 阻塞 selectorTimeout 秒
                             keyCount = selector.select(selectorTimeout);
                         }
                         wakeupCounter.set(0);

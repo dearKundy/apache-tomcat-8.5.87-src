@@ -25,6 +25,8 @@ public class ServerV1 {
         ServerSocket ss = new ServerSocket(8888, backLog);
 
         while (true) {
+            // 简单来说就是不执行 accept 的时候（或者执行慢），队列就会堆积，堆积达到 acceptCount，就拒绝连接了
+            // 那什么时候会不执行accept或者执行慢呢？都有可能。。。自己想
             Socket s = ss.accept();
             System.out.println(InetAddress.getLocalHost() + "已连接到服务器");
             // 每从队列中取一个连接，就睡半秒，模拟消费慢

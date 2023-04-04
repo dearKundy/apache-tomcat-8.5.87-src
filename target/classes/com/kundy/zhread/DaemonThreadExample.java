@@ -1,5 +1,8 @@
 package com.kundy.zhread;
 
+/**
+ * 守护线程
+ */
 public class DaemonThreadExample {
 
     public static void main(String[] args) {
@@ -14,7 +17,8 @@ public class DaemonThreadExample {
             }
         });
 
-        // 设置线程为守护线程
+        // 如果设置线程为守护线程，当主线程结束后，守护线程也将结束
+        // 如果不设置为守护线程，当主线程结束后，daemonThread还能继续运行
 //        daemonThread.setDaemon(true);
 
         // 启动守护线程
