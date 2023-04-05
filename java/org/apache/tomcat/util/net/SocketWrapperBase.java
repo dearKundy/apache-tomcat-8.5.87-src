@@ -1065,10 +1065,10 @@ public abstract class SocketWrapperBase<E> {
     protected class VectoredIOCompletionHandler<A> implements CompletionHandler<Long, OperationState<A>> {
         @Override
         public void completed(Long nBytes, OperationState<A> state) {
-            if (nBytes.longValue() < 0) {
+            if (nBytes < 0) {
                 failed(new EOFException(), state);
             } else {
-                state.nBytes += nBytes.longValue();
+                state.nBytes += nBytes;
                 CompletionState currentState = state.isInline() ? CompletionState.INLINE : CompletionState.DONE;
                 boolean complete = true;
                 boolean completion = true;
@@ -1099,7 +1099,7 @@ public abstract class SocketWrapperBase<E> {
                     }
                     state.end();
                     if (completion && state.handler != null && state.callHandler.compareAndSet(true, false)) {
-                        state.handler.completed(Long.valueOf(state.nBytes), state.attachment);
+                        state.handler.completed(state.nBytes, state.attachment);
                     }
                     synchronized (state) {
                         state.completionDone = true;
