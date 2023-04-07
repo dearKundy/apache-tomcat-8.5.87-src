@@ -16,19 +16,7 @@
  */
 package org.apache.catalina.valves;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Writer;
-import java.util.Scanner;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletResponse;
-
+import org.apache.catalina.Valve;
 import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
 import org.apache.catalina.util.ErrorPageSupport;
@@ -40,6 +28,13 @@ import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.descriptor.web.ErrorPage;
 import org.apache.tomcat.util.res.StringManager;
 import org.apache.tomcat.util.security.Escape;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletResponse;
+import java.io.*;
+import java.util.Scanner;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * <p>
@@ -90,7 +85,8 @@ public class ErrorReportValve extends ValveBase {
     public void invoke(Request request, Response response) throws IOException, ServletException {
 
         // Perform the request
-        getNext().invoke(request, response);
+        Valve next = getNext();
+        next.invoke(request, response);
 
         if (response.isCommitted()) {
             if (response.setErrorReported()) {

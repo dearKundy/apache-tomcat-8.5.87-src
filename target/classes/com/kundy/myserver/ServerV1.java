@@ -31,7 +31,7 @@ public class ServerV1 {
             System.out.println(InetAddress.getLocalHost() + "已连接到服务器");
             // 每从队列中取一个连接，就睡半秒，模拟消费慢
             Thread.sleep(500);
-            // 向线程池中提交任务，一次只能处理threadNum个线程，剩余的等待
+            // 向线程池中提交任务，一次只能处理threadNum个线程，剩余的等待（不会阻塞主线程）
             executor.submit(() -> {
                 try {
                     Thread.sleep(5000);
