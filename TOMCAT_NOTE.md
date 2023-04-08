@@ -7,11 +7,27 @@
 一个Tomcat中只有一个Server，一个Server可以包含多个Service，一个Service只有一个 Container（Engine），但是可以有多个Connectors。
 PS：Engine、Host、Context 都属于 Container，但它们三个是父子关系。
 
+代码层面体现：
+- org/apache/catalina/startup/Catalina.java:106 ：一个Catalina只有一个Server。
+- org/apache/catalina/core/StandardServer.java:134：一个Server对应多个Service。
+- org/apache/catalina/core/StandardService.java:86：一个Service对应一个Engine。
+- org/apache/catalina/core/StandardService.java:78：一个Service对应多个Connector。
+
 ![img_2.png](img_2.png)
+
 多个Connector和一个Container形成一个Service。
 
 ## Connector 架构图
 ![img_3.png](img_3.png)
+代码层面体现：
+- org/apache/catalina/connector/Connector.java:243：一个Connector对应一个 ProtocolHandler
+- org/apache/coyote/AbstractProtocol.java:74：一个 ProtocolHandler 对应一个 Endpoint
+- org/apache/tomcat/util/net/NioEndpoint.java:257：Endpoint中包含一个Executor
+- org/apache/tomcat/util/net/NioEndpoint.java:264：Endpoint中包含一个Poller
+- org/apache/tomcat/util/net/NioEndpoint.java:270：Endpoint中包含一个Acceptor
+- org/apache/tomcat/util/net/AbstractEndpoint.java:1245：新建一个Processor，然后扔到Executor中执行
+- org/apache/coyote/AbstractProcessor.java:53：一个Processor对应一个Adapter
+- org/apache/catalina/connector/CoyoteAdapter.java:343：在Adapter中调用container处理后续逻辑
 
 ## Container 架构
 ![img_4.png](img_4.png)
@@ -21,6 +37,8 @@ PS：Engine、Host、Context 都属于 Container，但它们三个是父子关�
 2. `Host`：代表一个站点，也可以叫虚拟主机，通过配置Host就可以添加站点；
 3. `Context`：代表一个应用程序，对应着平时开发的一套程序，或者一个WEB-INF目录以及下面的web.xml文件；
 4. `Wrapper`：每一Wrapper封装着一个Servlet；
+
+Engine、Host、Context、Wrapper 都属于 Container，通过ContainerBase的children字段实现父子关系。
 
 ## Container 如何处理请求
 Container处理请求是使用 `Pipeline-Valve` 管道来处理的！（Valve是阀门之意）
@@ -35,8 +53,24 @@ Pipeline的处理流程图如下：
 ![img_5.png](img_5.png)
 1. Connector在接收到请求后会首先调用最顶层容器的Pipeline来处理，这里的最顶层容器的Pipeline就是EnginePipeline（Engine的管道）；
 2. 在Engine的管道中依次会执行EngineValve1、EngineValve2等等，最后会执行StandardEngineValve，在StandardEngineValve中会调用Host管道，然后再依次执行Host的HostValve1、HostValve2等，最后在执行StandardHostValve，然后再依次调用Context的管道和Wrapper的管道，最后执行到StandardWrapperValve。
-3. 当执行到StandardWrapperValve的时候，会在StandardWrapperValve中创建FilterChain，并调用其doFilter方法来处理请求，这个FilterChain包含着我们配置的与请求相匹配的Filter和Servlet，其doFilter方法会依次调用所有的Filter的doFilter方法和Servlet的service方法，这样请求就得到了处理！
+3. 当执行到 `StandardWrapperValve` 的时候，会在StandardWrapperValve中创建FilterChain，并调用其doFilter方法来处理请求，这个FilterChain包含着我们配置的与请求相匹配的Filter和Servlet，其doFilter方法会依次调用所有的Filter的doFilter方法和Servlet的service方法，这样请求就得到了处理！
 4. 当所有的Pipeline-Valve都执行完之后，并且处理完了具体的请求，这个时候就可以将返回的结果交给Connector了，Connector在通过Socket的方式将结果返回给客户端。
+
+### 关于 pipeline
+pipleline是一个接口，里面只有三个字段：
+- basic：pipeline中最后会调用的的Valve。
+- container：该pipeline关联的容器。
+- frist：pipeline中第一个关联的Valve。
+
+Pipeline只有一个实现类StandardPipeline。
+
+### 关于 Valve
+> Valve的invoke方法最后会调用next.invoke()方法，next的兜底是basicValve（org/apache/catalina/core/StandardPipeline.java:344）。
+
+> 执行EnginePipeline -> HostPipeline -> ContextPipeline -> WrapperPipeline
+>
+用EnginePipeline详细说明：获取到frist valve，然后沿着valve的next链式执行，最终执行到 StandardEngineValve，在 StandardEngineValve 的invoke方法中会指定一下个容器Host的pipeLine。
+
 
 参考文章：
 - [Tomcat系统架构](https://blog.csdn.net/xlgen157387/article/details/79006434)
