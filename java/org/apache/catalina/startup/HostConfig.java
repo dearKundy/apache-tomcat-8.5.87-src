@@ -465,14 +465,17 @@ public class HostConfig implements LifecycleListener {
      * in our "application root" directory.
      */
     protected void deployApps() {
+        // 某Host负责的webapps
         File appBase = host.getAppBaseFile();
         File configBase = host.getConfigBaseFile();
+        // appBase.list()会拿到 appBase 下所有的一级目录和文件
         String[] filteredAppPaths = filterAppPaths(appBase.list());
         // Deploy XML descriptors from configBase
+        // configBase这个目录一般情况下是空的
         deployDescriptors(configBase, configBase.list());
-        // Deploy WARs
+        // Deploy WARs【部署war文件夹】
         deployWARs(appBase, filteredAppPaths);
-        // Deploy expanded folders
+        // Deploy expanded folders【部署展开的文件夹】
         deployDirectories(appBase, filteredAppPaths);
     }
 
@@ -1084,6 +1087,7 @@ public class HostConfig implements LifecycleListener {
                         }
 
                         // DeployDirectory will call removeServiced
+                        // 看样子会为appBase的每一个一集目录都创建一个context
                         results.add(es.submit(new DeployDirectory(this, cn, dir)));
                     } catch (Throwable t) {
                         ExceptionUtils.handleThrowable(t);
@@ -1163,6 +1167,7 @@ public class HostConfig implements LifecycleListener {
                 log.error(sm.getString("hostConfig.deployDescriptor.blocked", cn.getPath(), xml, xmlCopy));
                 context = new FailedContext();
             } else {
+                // 默认 StandardContext
                 context = (Context) Class.forName(contextClass).getConstructor().newInstance();
             }
 
@@ -1174,6 +1179,7 @@ public class HostConfig implements LifecycleListener {
             context.setPath(cn.getPath());
             context.setWebappVersion(cn.getVersion());
             context.setDocBase(cn.getBaseName());
+            // Host的小孩Context在这里塞进去的
             host.addChild(context);
         } catch (Throwable t) {
             ExceptionUtils.handleThrowable(t);

@@ -16,13 +16,13 @@
  */
 package org.apache.tomcat.util.descriptor.web;
 
+import org.apache.tomcat.util.res.StringManager;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import org.apache.tomcat.util.res.StringManager;
 
 
 /**
@@ -108,7 +108,7 @@ public class ServletDef implements Serializable {
     public void setServletName(String servletName) {
         if (servletName == null || servletName.equals("")) {
             throw new IllegalArgumentException(
-                    sm.getString("servletDef.invalidServletName", servletName));
+                sm.getString("servletDef.invalidServletName", servletName));
         }
         this.servletName = servletName;
     }
@@ -156,7 +156,7 @@ public class ServletDef implements Serializable {
      * Add an initialization parameter to the set of parameters associated
      * with this servlet.
      *
-     * @param name The initialisation parameter name
+     * @param name  The initialisation parameter name
      * @param value The initialisation parameter value
      */
     public void addInitParameter(String name, String value) {
@@ -210,6 +210,7 @@ public class ServletDef implements Serializable {
     /**
      * Add a security-role-ref to the set of security-role-refs associated
      * with this servlet.
+     *
      * @param securityRoleRef The security role
      */
     public void addSecurityRoleRef(SecurityRoleRef securityRoleRef) {

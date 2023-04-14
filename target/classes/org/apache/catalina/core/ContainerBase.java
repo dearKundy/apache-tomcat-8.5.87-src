@@ -881,6 +881,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase implements Contai
         // Start our child containers, if any
         Container children[] = findChildren();
         List<Future<Void>> results = new ArrayList<>();
+        // 启动小孩
         for (Container child : children) {
             results.add(startStopExecutor.submit(new StartChild(child)));
         }
@@ -909,6 +910,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase implements Contai
             ((Lifecycle) pipeline).start();
         }
 
+        // 这里包含了 StandardContext deployApps的逻辑
         setState(LifecycleState.STARTING);
 
         // Start our thread

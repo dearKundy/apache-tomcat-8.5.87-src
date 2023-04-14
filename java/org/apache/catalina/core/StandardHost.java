@@ -658,6 +658,7 @@ public class StandardHost extends ContainerBase implements Host {
             context.setPath(cn.getPath());
         }
 
+        // 添加Context
         super.addChild(child);
 
     }

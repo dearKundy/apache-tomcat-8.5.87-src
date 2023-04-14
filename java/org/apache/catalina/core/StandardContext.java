@@ -4852,6 +4852,7 @@ public class StandardContext extends ContainerBase implements Context, Notificat
                 }
 
                 // Notify our interested LifecycleListeners
+                // 解析web.xml 生成对应Wrapper这边进去
                 fireLifecycleEvent(Lifecycle.CONFIGURE_START_EVENT, null);
 
                 // Start our child containers, if not already started

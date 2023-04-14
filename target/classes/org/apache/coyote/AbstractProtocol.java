@@ -918,6 +918,7 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler, MBeanRegis
                     }
                 }
                 if (processor == null) {
+                    // 创建processor
                     processor = getProtocol().createProcessor();
                     register(processor);
                     if (getLog().isDebugEnabled()) {

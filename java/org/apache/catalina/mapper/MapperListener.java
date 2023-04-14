@@ -103,6 +103,7 @@ public class MapperListener extends LifecycleMBeanBase implements ContainerListe
 
         addListeners(engine);
 
+        // 找出 Engine 下所有的 Host
         Container[] conHosts = engine.findChildren();
         for (Container conHost : conHosts) {
             Host host = (Host) conHost;
@@ -293,8 +294,10 @@ public class MapperListener extends LifecycleMBeanBase implements ContainerListe
     private void registerHost(Host host) {
 
         String[] aliases = host.findAliases();
+        // 往mapper的hosts字段添加host【service与host的关系在此建立】
         mapper.addHost(host.getName(), aliases, host);
 
+        // 找到这个Host下的所有Context
         for (Container container : host.findChildren()) {
             if (container.getState().isAvailable()) {
                 registerContext((Context) container);

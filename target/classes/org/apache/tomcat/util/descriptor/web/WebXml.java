@@ -16,29 +16,6 @@
  */
 package org.apache.tomcat.util.descriptor.web;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
-import javax.servlet.DispatcherType;
-import javax.servlet.ServletContext;
-import javax.servlet.SessionTrackingMode;
-import javax.servlet.descriptor.JspConfigDescriptor;
-import javax.servlet.descriptor.JspPropertyGroupDescriptor;
-import javax.servlet.descriptor.TaglibDescriptor;
-
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.buf.UDecoder;
@@ -46,6 +23,18 @@ import org.apache.tomcat.util.descriptor.XmlIdentifiers;
 import org.apache.tomcat.util.digester.DocumentProperties;
 import org.apache.tomcat.util.res.StringManager;
 import org.apache.tomcat.util.security.Escape;
+
+import javax.servlet.DispatcherType;
+import javax.servlet.ServletContext;
+import javax.servlet.SessionTrackingMode;
+import javax.servlet.descriptor.JspConfigDescriptor;
+import javax.servlet.descriptor.JspPropertyGroupDescriptor;
+import javax.servlet.descriptor.TaglibDescriptor;
+import java.io.UnsupportedEncodingException;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Representation of common elements of web.xml and web-fragment.xml. Provides
@@ -57,7 +46,7 @@ import org.apache.tomcat.util.security.Escape;
  */
 @SuppressWarnings("deprecation")
 public class WebXml extends XmlEncodingBase implements DocumentProperties.Encoding,
-        DocumentProperties.Charset {
+    DocumentProperties.Charset {
 
     protected static final String ORDER_OTHERS =
         "org.apache.catalina.order.others";
@@ -73,9 +62,11 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
      * newly added Servlet elements are marked as overridable.
      */
     private boolean overridable = false;
+
     public boolean isOverridable() {
         return overridable;
     }
+
     public void setOverridable(boolean overridable) {
         this.overridable = overridable;
     }
@@ -86,9 +77,11 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
      * 2.c) varies depending on the ordering method used.
      */
     private final List<String> duplicates = new ArrayList<>();
+
     public boolean isDuplicated() {
         return !duplicates.isEmpty();
     }
+
     @Deprecated
     public void setDuplicated(boolean duplicated) {
         if (duplicated) {
@@ -97,9 +90,11 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
             duplicates.clear();
         }
     }
+
     public void addDuplicate(String duplicate) {
         this.duplicates.add(duplicate);
     }
+
     public List<String> getDuplicates() {
         return new ArrayList<>(this.duplicates);
     }
@@ -109,19 +104,23 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
      * Absolute Ordering
      */
     private Set<String> absoluteOrdering = null;
+
     public void createAbsoluteOrdering() {
         if (absoluteOrdering == null) {
             absoluteOrdering = new LinkedHashSet<>();
         }
     }
+
     public void addAbsoluteOrdering(String fragmentName) {
         createAbsoluteOrdering();
         absoluteOrdering.add(fragmentName);
     }
+
     public void addAbsoluteOrderingOthers() {
         createAbsoluteOrdering();
         absoluteOrdering.add(ORDER_OTHERS);
     }
+
     public Set<String> getAbsoluteOrdering() {
         return absoluteOrdering;
     }
@@ -131,30 +130,40 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
      * Relative ordering
      */
     private final Set<String> after = new LinkedHashSet<>();
+
     public void addAfterOrdering(String fragmentName) {
         after.add(fragmentName);
     }
+
     public void addAfterOrderingOthers() {
         if (before.contains(ORDER_OTHERS)) {
             throw new IllegalArgumentException(sm.getString(
-                    "webXml.multipleOther"));
+                "webXml.multipleOther"));
         }
         after.add(ORDER_OTHERS);
     }
-    public Set<String> getAfterOrdering() { return after; }
+
+    public Set<String> getAfterOrdering() {
+        return after;
+    }
 
     private final Set<String> before = new LinkedHashSet<>();
+
     public void addBeforeOrdering(String fragmentName) {
         before.add(fragmentName);
     }
+
     public void addBeforeOrderingOthers() {
         if (after.contains(ORDER_OTHERS)) {
             throw new IllegalArgumentException(sm.getString(
-                    "webXml.multipleOther"));
+                "webXml.multipleOther"));
         }
         before.add(ORDER_OTHERS);
     }
-    public Set<String> getBeforeOrdering() { return before; }
+
+    public Set<String> getBeforeOrdering() {
+        return before;
+    }
 
     // Common elements and attributes
     // Required attribute of web-app element
@@ -165,9 +174,11 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
         sb.append(minorVersion);
         return sb.toString();
     }
+
     /**
      * Set the version for this web.xml file
-     * @param version   Values of <code>null</code> will be ignored
+     *
+     * @param version Values of <code>null</code> will be ignored
      */
     public void setVersion(String version) {
         if (version == null) {
@@ -196,10 +207,13 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
     }
 
 
-
     // Optional publicId attribute
     private String publicId = null;
-    public String getPublicId() { return publicId; }
+
+    public String getPublicId() {
+        return publicId;
+    }
+
     public void setPublicId(String publicId) {
         // Update major and minor version
         if (publicId == null) {
@@ -224,13 +238,22 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
 
     // Optional metadata-complete attribute
     private boolean metadataComplete = false;
-    public boolean isMetadataComplete() { return metadataComplete; }
+
+    public boolean isMetadataComplete() {
+        return metadataComplete;
+    }
+
     public void setMetadataComplete(boolean metadataComplete) {
-        this.metadataComplete = metadataComplete; }
+        this.metadataComplete = metadataComplete;
+    }
 
     // Optional name element
     private String name = null;
-    public String getName() { return name; }
+
+    public String getName() {
+        return name;
+    }
+
     public void setName(String name) {
         if (ORDER_OTHERS.equalsIgnoreCase(name)) {
             // This is unusual. This name will be ignored. Log the fact.
@@ -244,8 +267,14 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
     // Default to 3,1
     private int majorVersion = 3;
     private int minorVersion = 1;
-    public int getMajorVersion() { return majorVersion; }
-    public int getMinorVersion() { return minorVersion; }
+
+    public int getMajorVersion() {
+        return majorVersion;
+    }
+
+    public int getMinorVersion() {
+        return minorVersion;
+    }
 
     // web-app elements
     // TODO: Ignored elements:
@@ -254,71 +283,97 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
 
     // display-name - TODO should support multiple with language
     private String displayName = null;
-    public String getDisplayName() { return displayName; }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
     }
 
     // distributable
     private boolean distributable = false;
-    public boolean isDistributable() { return distributable; }
+
+    public boolean isDistributable() {
+        return distributable;
+    }
+
     public void setDistributable(boolean distributable) {
         this.distributable = distributable;
     }
 
     // deny-uncovered-http-methods
     private boolean denyUncoveredHttpMethods = false;
+
     public boolean getDenyUncoveredHttpMethods() {
         return denyUncoveredHttpMethods;
     }
+
     public void setDenyUncoveredHttpMethods(boolean denyUncoveredHttpMethods) {
         this.denyUncoveredHttpMethods = denyUncoveredHttpMethods;
     }
 
     // context-param
     // TODO: description (multiple with language) is ignored
-    private final Map<String,String> contextParams = new HashMap<>();
+    private final Map<String, String> contextParams = new HashMap<>();
+
     public void addContextParam(String param, String value) {
         contextParams.put(param, value);
     }
-    public Map<String,String> getContextParams() { return contextParams; }
+
+    public Map<String, String> getContextParams() {
+        return contextParams;
+    }
 
     // filter
     // TODO: Should support multiple description elements with language
     // TODO: Should support multiple display-name elements with language
     // TODO: Should support multiple icon elements
     // TODO: Description for init-param is ignored
-    private final Map<String,FilterDef> filters = new LinkedHashMap<>();
+    private final Map<String, FilterDef> filters = new LinkedHashMap<>();
+
     public void addFilter(FilterDef filter) {
         if (filters.containsKey(filter.getFilterName())) {
             // Filter names must be unique within a web(-fragment).xml
             throw new IllegalArgumentException(
-                    sm.getString("webXml.duplicateFilter",
-                            filter.getFilterName()));
+                sm.getString("webXml.duplicateFilter",
+                    filter.getFilterName()));
         }
         filters.put(filter.getFilterName(), filter);
     }
-    public Map<String,FilterDef> getFilters() { return filters; }
+
+    public Map<String, FilterDef> getFilters() {
+        return filters;
+    }
 
     // filter-mapping
     private final Set<FilterMap> filterMaps = new LinkedHashSet<>();
     private final Set<String> filterMappingNames = new HashSet<>();
+
     public void addFilterMapping(FilterMap filterMap) {
         filterMap.setCharset(getCharset());
         filterMaps.add(filterMap);
         filterMappingNames.add(filterMap.getFilterName());
     }
-    public Set<FilterMap> getFilterMappings() { return filterMaps; }
+
+    public Set<FilterMap> getFilterMappings() {
+        return filterMaps;
+    }
 
     // listener
     // TODO: description (multiple with language) is ignored
     // TODO: display-name (multiple with language) is ignored
     // TODO: icon (multiple) is ignored
     private final Set<String> listeners = new LinkedHashSet<>();
+
     public void addListener(String className) {
         listeners.add(className);
     }
-    public Set<String> getListeners() { return listeners; }
+
+    public Set<String> getListeners() {
+        return listeners;
+    }
 
     // servlet
     // TODO: description (multiple with language) is ignored
@@ -326,66 +381,87 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
     // TODO: icon (multiple) is ignored
     // TODO: init-param/description (multiple with language) is ignored
     // TODO: security-role-ref/description (multiple with language) is ignored
-    private final Map<String,ServletDef> servlets = new HashMap<>();
+    private final Map<String, ServletDef> servlets = new HashMap<>();
+
     public void addServlet(ServletDef servletDef) {
         servlets.put(servletDef.getServletName(), servletDef);
         if (overridable) {
             servletDef.setOverridable(overridable);
         }
     }
-    public Map<String,ServletDef> getServlets() { return servlets; }
+
+    public Map<String, ServletDef> getServlets() {
+        return servlets;
+    }
 
     // servlet-mapping
     // Note: URLPatterns from web.xml may be URL encoded
     //       (https://svn.apache.org/r285186)
-    private final Map<String,String> servletMappings = new HashMap<>();
+    private final Map<String, String> servletMappings = new HashMap<>();
     private final Set<String> servletMappingNames = new HashSet<>();
+
     public void addServletMapping(String urlPattern, String servletName) {
         addServletMappingDecoded(UDecoder.URLDecode(urlPattern, getCharset()), servletName);
     }
+
     public void addServletMappingDecoded(String urlPattern, String servletName) {
         String oldServletName = servletMappings.put(urlPattern, servletName);
         if (oldServletName != null) {
             // Duplicate mapping. As per clarification from the Servlet EG,
             // deployment should fail.
             throw new IllegalArgumentException(sm.getString(
-                    "webXml.duplicateServletMapping", oldServletName,
-                    servletName, urlPattern));
+                "webXml.duplicateServletMapping", oldServletName,
+                servletName, urlPattern));
         }
         servletMappingNames.add(servletName);
     }
-    public Map<String,String> getServletMappings() { return servletMappings; }
+
+    public Map<String, String> getServletMappings() {
+        return servletMappings;
+    }
 
     // session-config
     // Digester will check there is only one of these
     private SessionConfig sessionConfig = new SessionConfig();
+
     public void setSessionConfig(SessionConfig sessionConfig) {
         this.sessionConfig = sessionConfig;
     }
-    public SessionConfig getSessionConfig() { return sessionConfig; }
+
+    public SessionConfig getSessionConfig() {
+        return sessionConfig;
+    }
 
     // mime-mapping
-    private final Map<String,String> mimeMappings = new HashMap<>();
+    private final Map<String, String> mimeMappings = new HashMap<>();
+
     public void addMimeMapping(String extension, String mimeType) {
         mimeMappings.put(extension, mimeType);
     }
-    public Map<String,String> getMimeMappings() { return mimeMappings; }
+
+    public Map<String, String> getMimeMappings() {
+        return mimeMappings;
+    }
 
     // welcome-file-list merge control
     private boolean replaceWelcomeFiles = false;
     private boolean alwaysAddWelcomeFiles = true;
+
     /**
      * When merging/parsing web.xml files into this web.xml should the current
      * set be completely replaced?
+     *
      * @param replaceWelcomeFiles <code>true</code> to replace welcome files
-     *  rather than add to the list
+     *                            rather than add to the list
      */
     public void setReplaceWelcomeFiles(boolean replaceWelcomeFiles) {
         this.replaceWelcomeFiles = replaceWelcomeFiles;
     }
+
     /**
      * When merging from this web.xml, should the welcome files be added to the
      * target web.xml even if it already contains welcome file definitions.
+     *
      * @param alwaysAddWelcomeFiles <code>true</code> to add welcome files
      */
     public void setAlwaysAddWelcomeFiles(boolean alwaysAddWelcomeFiles) {
@@ -394,6 +470,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
 
     // welcome-file-list
     private final Set<String> welcomeFiles = new LinkedHashSet<>();
+
     public void addWelcomeFile(String welcomeFile) {
         if (replaceWelcomeFiles) {
             welcomeFiles.clear();
@@ -401,35 +478,48 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
         }
         welcomeFiles.add(welcomeFile);
     }
-    public Set<String> getWelcomeFiles() { return welcomeFiles; }
+
+    public Set<String> getWelcomeFiles() {
+        return welcomeFiles;
+    }
 
     // error-page
-    private final Map<String,ErrorPage> errorPages = new HashMap<>();
+    private final Map<String, ErrorPage> errorPages = new HashMap<>();
+
     public void addErrorPage(ErrorPage errorPage) {
         errorPage.setCharset(getCharset());
         errorPages.put(errorPage.getName(), errorPage);
     }
-    public Map<String,ErrorPage> getErrorPages() { return errorPages; }
+
+    public Map<String, ErrorPage> getErrorPages() {
+        return errorPages;
+    }
 
     // Digester will check there is only one jsp-config
     // jsp-config/taglib or taglib (2.3 and earlier)
-    private final Map<String,String> taglibs = new HashMap<>();
+    private final Map<String, String> taglibs = new HashMap<>();
+
     public void addTaglib(String uri, String location) {
         if (taglibs.containsKey(uri)) {
             // Taglib URIs must be unique within a web(-fragment).xml
             throw new IllegalArgumentException(
-                    sm.getString("webXml.duplicateTaglibUri", uri));
+                sm.getString("webXml.duplicateTaglibUri", uri));
         }
         taglibs.put(uri, location);
     }
-    public Map<String,String> getTaglibs() { return taglibs; }
+
+    public Map<String, String> getTaglibs() {
+        return taglibs;
+    }
 
     // jsp-config/jsp-property-group
     private final Set<JspPropertyGroup> jspPropertyGroups = new LinkedHashSet<>();
+
     public void addJspPropertyGroup(JspPropertyGroup propertyGroup) {
         propertyGroup.setCharset(getCharset());
         jspPropertyGroups.add(propertyGroup);
     }
+
     public Set<JspPropertyGroup> getJspPropertyGroups() {
         return jspPropertyGroups;
     }
@@ -438,10 +528,12 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
     // TODO: Should support multiple display-name elements with language
     // TODO: Should support multiple description elements with language
     private final Set<SecurityConstraint> securityConstraints = new HashSet<>();
+
     public void addSecurityConstraint(SecurityConstraint securityConstraint) {
         securityConstraint.setCharset(getCharset());
         securityConstraints.add(securityConstraint);
     }
+
     public Set<SecurityConstraint> getSecurityConstraints() {
         return securityConstraints;
     }
@@ -449,49 +541,67 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
     // login-config
     // Digester will check there is only one of these
     private LoginConfig loginConfig = null;
+
     public void setLoginConfig(LoginConfig loginConfig) {
         loginConfig.setCharset(getCharset());
         this.loginConfig = loginConfig;
     }
-    public LoginConfig getLoginConfig() { return loginConfig; }
+
+    public LoginConfig getLoginConfig() {
+        return loginConfig;
+    }
 
     // security-role
     // TODO: description (multiple with language) is ignored
     private final Set<String> securityRoles = new HashSet<>();
+
     public void addSecurityRole(String securityRole) {
         securityRoles.add(securityRole);
     }
-    public Set<String> getSecurityRoles() { return securityRoles; }
+
+    public Set<String> getSecurityRoles() {
+        return securityRoles;
+    }
 
     // env-entry
     // TODO: Should support multiple description elements with language
-    private final Map<String,ContextEnvironment> envEntries = new HashMap<>();
+    private final Map<String, ContextEnvironment> envEntries = new HashMap<>();
+
     public void addEnvEntry(ContextEnvironment envEntry) {
         if (envEntries.containsKey(envEntry.getName())) {
             // env-entry names must be unique within a web(-fragment).xml
             throw new IllegalArgumentException(
-                    sm.getString("webXml.duplicateEnvEntry",
-                            envEntry.getName()));
+                sm.getString("webXml.duplicateEnvEntry",
+                    envEntry.getName()));
         }
-        envEntries.put(envEntry.getName(),envEntry);
+        envEntries.put(envEntry.getName(), envEntry);
     }
-    public Map<String,ContextEnvironment> getEnvEntries() { return envEntries; }
+
+    public Map<String, ContextEnvironment> getEnvEntries() {
+        return envEntries;
+    }
 
     // ejb-ref
     // TODO: Should support multiple description elements with language
-    private final Map<String,ContextEjb> ejbRefs = new HashMap<>();
+    private final Map<String, ContextEjb> ejbRefs = new HashMap<>();
+
     public void addEjbRef(ContextEjb ejbRef) {
-        ejbRefs.put(ejbRef.getName(),ejbRef);
+        ejbRefs.put(ejbRef.getName(), ejbRef);
     }
-    public Map<String,ContextEjb> getEjbRefs() { return ejbRefs; }
+
+    public Map<String, ContextEjb> getEjbRefs() {
+        return ejbRefs;
+    }
 
     // ejb-local-ref
     // TODO: Should support multiple description elements with language
-    private final Map<String,ContextLocalEjb> ejbLocalRefs = new HashMap<>();
+    private final Map<String, ContextLocalEjb> ejbLocalRefs = new HashMap<>();
+
     public void addEjbLocalRef(ContextLocalEjb ejbLocalRef) {
-        ejbLocalRefs.put(ejbLocalRef.getName(),ejbLocalRef);
+        ejbLocalRefs.put(ejbLocalRef.getName(), ejbLocalRef);
     }
-    public Map<String,ContextLocalEjb> getEjbLocalRefs() {
+
+    public Map<String, ContextLocalEjb> getEjbLocalRefs() {
         return ejbLocalRefs;
     }
 
@@ -499,62 +609,72 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
     // TODO: Should support multiple description elements with language
     // TODO: Should support multiple display-names elements with language
     // TODO: Should support multiple icon elements ???
-    private final Map<String,ContextService> serviceRefs = new HashMap<>();
+    private final Map<String, ContextService> serviceRefs = new HashMap<>();
+
     public void addServiceRef(ContextService serviceRef) {
         serviceRefs.put(serviceRef.getName(), serviceRef);
     }
-    public Map<String,ContextService> getServiceRefs() { return serviceRefs; }
+
+    public Map<String, ContextService> getServiceRefs() {
+        return serviceRefs;
+    }
 
     // resource-ref
     // TODO: Should support multiple description elements with language
-    private final Map<String,ContextResource> resourceRefs = new HashMap<>();
+    private final Map<String, ContextResource> resourceRefs = new HashMap<>();
+
     public void addResourceRef(ContextResource resourceRef) {
         if (resourceRefs.containsKey(resourceRef.getName())) {
             // resource-ref names must be unique within a web(-fragment).xml
             throw new IllegalArgumentException(
-                    sm.getString("webXml.duplicateResourceRef",
-                            resourceRef.getName()));
+                sm.getString("webXml.duplicateResourceRef",
+                    resourceRef.getName()));
         }
         resourceRefs.put(resourceRef.getName(), resourceRef);
     }
-    public Map<String,ContextResource> getResourceRefs() {
+
+    public Map<String, ContextResource> getResourceRefs() {
         return resourceRefs;
     }
 
     // resource-env-ref
     // TODO: Should support multiple description elements with language
-    private final Map<String,ContextResourceEnvRef> resourceEnvRefs = new HashMap<>();
+    private final Map<String, ContextResourceEnvRef> resourceEnvRefs = new HashMap<>();
+
     public void addResourceEnvRef(ContextResourceEnvRef resourceEnvRef) {
         if (resourceEnvRefs.containsKey(resourceEnvRef.getName())) {
             // resource-env-ref names must be unique within a web(-fragment).xml
             throw new IllegalArgumentException(
-                    sm.getString("webXml.duplicateResourceEnvRef",
-                            resourceEnvRef.getName()));
+                sm.getString("webXml.duplicateResourceEnvRef",
+                    resourceEnvRef.getName()));
         }
         resourceEnvRefs.put(resourceEnvRef.getName(), resourceEnvRef);
     }
-    public Map<String,ContextResourceEnvRef> getResourceEnvRefs() {
+
+    public Map<String, ContextResourceEnvRef> getResourceEnvRefs() {
         return resourceEnvRefs;
     }
 
     // message-destination-ref
     // TODO: Should support multiple description elements with language
-    private final Map<String,MessageDestinationRef> messageDestinationRefs =
+    private final Map<String, MessageDestinationRef> messageDestinationRefs =
         new HashMap<>();
+
     public void addMessageDestinationRef(
-            MessageDestinationRef messageDestinationRef) {
+        MessageDestinationRef messageDestinationRef) {
         if (messageDestinationRefs.containsKey(
-                messageDestinationRef.getName())) {
+            messageDestinationRef.getName())) {
             // message-destination-ref names must be unique within a
             // web(-fragment).xml
             throw new IllegalArgumentException(sm.getString(
-                    "webXml.duplicateMessageDestinationRef",
-                    messageDestinationRef.getName()));
+                "webXml.duplicateMessageDestinationRef",
+                messageDestinationRef.getName()));
         }
         messageDestinationRefs.put(messageDestinationRef.getName(),
-                messageDestinationRef);
+            messageDestinationRef);
     }
-    public Map<String,MessageDestinationRef> getMessageDestinationRefs() {
+
+    public Map<String, MessageDestinationRef> getMessageDestinationRefs() {
         return messageDestinationRefs;
     }
 
@@ -562,52 +682,60 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
     // TODO: Should support multiple description elements with language
     // TODO: Should support multiple display-names elements with language
     // TODO: Should support multiple icon elements ???
-    private final Map<String,MessageDestination> messageDestinations =
-            new HashMap<>();
+    private final Map<String, MessageDestination> messageDestinations =
+        new HashMap<>();
+
     public void addMessageDestination(
-            MessageDestination messageDestination) {
+        MessageDestination messageDestination) {
         if (messageDestinations.containsKey(
-                messageDestination.getName())) {
+            messageDestination.getName())) {
             // message-destination names must be unique within a
             // web(-fragment).xml
             throw new IllegalArgumentException(
-                    sm.getString("webXml.duplicateMessageDestination",
-                            messageDestination.getName()));
+                sm.getString("webXml.duplicateMessageDestination",
+                    messageDestination.getName()));
         }
         messageDestinations.put(messageDestination.getName(),
-                messageDestination);
+            messageDestination);
     }
-    public Map<String,MessageDestination> getMessageDestinations() {
+
+    public Map<String, MessageDestination> getMessageDestinations() {
         return messageDestinations;
     }
 
     // locale-encoding-mapping-list
-    private final Map<String,String> localeEncodingMappings = new HashMap<>();
+    private final Map<String, String> localeEncodingMappings = new HashMap<>();
+
     public void addLocaleEncodingMapping(String locale, String encoding) {
         localeEncodingMappings.put(locale, encoding);
     }
-    public Map<String,String> getLocaleEncodingMappings() {
+
+    public Map<String, String> getLocaleEncodingMappings() {
         return localeEncodingMappings;
     }
 
     // post-construct elements
     private Map<String, String> postConstructMethods = new HashMap<>();
+
     public void addPostConstructMethods(String clazz, String method) {
         if (!postConstructMethods.containsKey(clazz)) {
             postConstructMethods.put(clazz, method);
         }
     }
+
     public Map<String, String> getPostConstructMethods() {
         return postConstructMethods;
     }
 
     // pre-destroy elements
     private Map<String, String> preDestroyMethods = new HashMap<>();
+
     public void addPreDestroyMethods(String clazz, String method) {
         if (!preDestroyMethods.containsKey(clazz)) {
             preDestroyMethods.put(clazz, method);
         }
     }
+
     public Map<String, String> getPreDestroyMethods() {
         return preDestroyMethods;
     }
@@ -618,10 +746,10 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
         }
 
         Collection<JspPropertyGroupDescriptor> descriptors =
-                new ArrayList<>(jspPropertyGroups.size());
+            new ArrayList<>(jspPropertyGroups.size());
         for (JspPropertyGroup jspPropertyGroup : jspPropertyGroups) {
             JspPropertyGroupDescriptor descriptor =
-                    new JspPropertyGroupDescriptorImpl(jspPropertyGroup);
+                new JspPropertyGroupDescriptorImpl(jspPropertyGroup);
             descriptors.add(descriptor);
 
         }
@@ -629,7 +757,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
         Collection<TaglibDescriptor> tlds = new HashSet<>(taglibs.size());
         for (Entry<String, String> entry : taglibs.entrySet()) {
             TaglibDescriptor descriptor = new TaglibDescriptorImpl(
-                    entry.getValue(), entry.getKey());
+                entry.getValue(), entry.getKey());
             tlds.add(descriptor);
         }
         return new JspConfigDescriptorImpl(descriptors, tlds);
@@ -639,24 +767,48 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
 
     // URL of JAR / exploded JAR for this web-fragment
     private URL uRL = null;
-    public void setURL(URL url) { this.uRL = url; }
-    public URL getURL() { return uRL; }
+
+    public void setURL(URL url) {
+        this.uRL = url;
+    }
+
+    public URL getURL() {
+        return uRL;
+    }
 
     // Name of jar file
     private String jarName = null;
-    public void setJarName(String jarName) { this.jarName = jarName; }
-    public String getJarName() { return jarName; }
+
+    public void setJarName(String jarName) {
+        this.jarName = jarName;
+    }
+
+    public String getJarName() {
+        return jarName;
+    }
 
     // Is this JAR part of the application or is it a container JAR? Assume it
     // is.
     private boolean webappJar = true;
-    public void setWebappJar(boolean webappJar) { this.webappJar = webappJar; }
-    public boolean getWebappJar() { return webappJar; }
+
+    public void setWebappJar(boolean webappJar) {
+        this.webappJar = webappJar;
+    }
+
+    public boolean getWebappJar() {
+        return webappJar;
+    }
 
     // Does this web application delegate first for class loading?
     private boolean delegate = false;
-    public boolean getDelegate() { return delegate; }
-    public void setDelegate(boolean delegate) { this.delegate = delegate; }
+
+    public boolean getDelegate() {
+        return delegate;
+    }
+
+    public void setDelegate(boolean delegate) {
+        this.delegate = delegate;
+    }
 
     @Override
     public String toString() {
@@ -765,20 +917,20 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                 FilterDef filterDef = entry.getValue();
                 sb.append("  <filter>\n");
                 appendElement(sb, INDENT4, "description",
-                        filterDef.getDescription());
+                    filterDef.getDescription());
                 appendElement(sb, INDENT4, "display-name",
-                        filterDef.getDisplayName());
+                    filterDef.getDisplayName());
                 appendElement(sb, INDENT4, "filter-name",
-                        filterDef.getFilterName());
+                    filterDef.getFilterName());
                 appendElement(sb, INDENT4, "filter-class",
-                        filterDef.getFilterClass());
+                    filterDef.getFilterClass());
                 // Async support was introduced for Servlet 3.0 onwards
                 if (getMajorVersion() != 2) {
                     appendElement(sb, INDENT4, "async-supported",
-                            filterDef.getAsyncSupported());
+                        filterDef.getAsyncSupported());
                 }
                 for (Map.Entry<String, String> param :
-                        filterDef.getParameterMap().entrySet()) {
+                    filterDef.getParameterMap().entrySet()) {
                     sb.append("    <init-param>\n");
                     appendElement(sb, INDENT6, "param-name", param.getKey());
                     appendElement(sb, INDENT6, "param-value", param.getValue());
@@ -791,7 +943,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
             for (FilterMap filterMap : filterMaps) {
                 sb.append("  <filter-mapping>\n");
                 appendElement(sb, INDENT4, "filter-name",
-                        filterMap.getFilterName());
+                    filterMap.getFilterName());
                 if (filterMap.getMatchAllServletNames()) {
                     sb.append("    <servlet-name>*</servlet-name>\n");
                 } else {
@@ -810,7 +962,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                 if (getMajorVersion() > 2 || getMinorVersion() > 3) {
                     for (String dispatcher : filterMap.getDispatcherNames()) {
                         if (getMajorVersion() == 2 &&
-                                DispatcherType.ASYNC.name().equals(dispatcher)) {
+                            DispatcherType.ASYNC.name().equals(dispatcher)) {
                             continue;
                         }
                         appendElement(sb, INDENT4, "dispatcher", dispatcher);
@@ -835,27 +987,27 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
             ServletDef servletDef = entry.getValue();
             sb.append("  <servlet>\n");
             appendElement(sb, INDENT4, "description",
-                    servletDef.getDescription());
+                servletDef.getDescription());
             appendElement(sb, INDENT4, "display-name",
-                    servletDef.getDisplayName());
+                servletDef.getDisplayName());
             appendElement(sb, INDENT4, "servlet-name", entry.getKey());
             appendElement(sb, INDENT4, "servlet-class",
-                    servletDef.getServletClass());
+                servletDef.getServletClass());
             appendElement(sb, INDENT4, "jsp-file", servletDef.getJspFile());
             for (Map.Entry<String, String> param :
-                    servletDef.getParameterMap().entrySet()) {
+                servletDef.getParameterMap().entrySet()) {
                 sb.append("    <init-param>\n");
                 appendElement(sb, INDENT6, "param-name", param.getKey());
                 appendElement(sb, INDENT6, "param-value", param.getValue());
                 sb.append("    </init-param>\n");
             }
             appendElement(sb, INDENT4, "load-on-startup",
-                    servletDef.getLoadOnStartup());
+                servletDef.getLoadOnStartup());
             appendElement(sb, INDENT4, "enabled", servletDef.getEnabled());
             // Async support was introduced for Servlet 3.0 onwards
             if (getMajorVersion() != 2) {
                 appendElement(sb, INDENT4, "async-supported",
-                        servletDef.getAsyncSupported());
+                    servletDef.getAsyncSupported());
             }
             // servlet/run-as was introduced in Servlet 2.3
             if (getMajorVersion() > 2 || getMinorVersion() > 2) {
@@ -877,13 +1029,13 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                 if (multipartDef != null) {
                     sb.append("    <multipart-config>\n");
                     appendElement(sb, INDENT6, "location",
-                            multipartDef.getLocation());
+                        multipartDef.getLocation());
                     appendElement(sb, INDENT6, "max-file-size",
-                            multipartDef.getMaxFileSize());
+                        multipartDef.getMaxFileSize());
                     appendElement(sb, INDENT6, "max-request-size",
-                            multipartDef.getMaxRequestSize());
+                        multipartDef.getMaxRequestSize());
                     appendElement(sb, INDENT6, "file-size-threshold",
-                            multipartDef.getFileSizeThreshold());
+                        multipartDef.getFileSizeThreshold());
                     sb.append("    </multipart-config>\n");
                 }
             }
@@ -902,24 +1054,24 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
         if (sessionConfig != null) {
             sb.append("  <session-config>\n");
             appendElement(sb, INDENT4, "session-timeout",
-                    sessionConfig.getSessionTimeout());
+                sessionConfig.getSessionTimeout());
             if (majorVersion >= 3) {
                 sb.append("    <cookie-config>\n");
                 appendElement(sb, INDENT6, "name", sessionConfig.getCookieName());
                 appendElement(sb, INDENT6, "domain",
-                        sessionConfig.getCookieDomain());
+                    sessionConfig.getCookieDomain());
                 appendElement(sb, INDENT6, "path", sessionConfig.getCookiePath());
                 appendElement(sb, INDENT6, "comment",
-                        sessionConfig.getCookieComment());
+                    sessionConfig.getCookieComment());
                 appendElement(sb, INDENT6, "http-only",
-                        sessionConfig.getCookieHttpOnly());
+                    sessionConfig.getCookieHttpOnly());
                 appendElement(sb, INDENT6, "secure",
-                        sessionConfig.getCookieSecure());
+                    sessionConfig.getCookieSecure());
                 appendElement(sb, INDENT6, "max-age",
-                        sessionConfig.getCookieMaxAge());
+                    sessionConfig.getCookieMaxAge());
                 sb.append("    </cookie-config>\n");
                 for (SessionTrackingMode stm :
-                        sessionConfig.getSessionTrackingModes()) {
+                    sessionConfig.getSessionTrackingModes()) {
                     appendElement(sb, INDENT4, "tracking-mode", stm.name());
                 }
             }
@@ -955,7 +1107,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                 appendElement(sb, INDENT4, "exception-type", exceptionType);
             } else if (errorPage.getErrorCode() > 0) {
                 appendElement(sb, INDENT4, "error-code",
-                        Integer.toString(errorCode));
+                    Integer.toString(errorCode));
             }
             appendElement(sb, INDENT4, "location", errorPage.getLocation());
             sb.append("  </error-page>\n");
@@ -982,9 +1134,9 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                     }
                     appendElement(sb, INDENT6, "el-ignored", jpg.getElIgnored());
                     appendElement(sb, INDENT6, "page-encoding",
-                            jpg.getPageEncoding());
+                        jpg.getPageEncoding());
                     appendElement(sb, INDENT6, "scripting-invalid",
-                            jpg.getScriptingInvalid());
+                        jpg.getScriptingInvalid());
                     appendElement(sb, INDENT6, "is-xml", jpg.getIsXml());
                     for (String prelude : jpg.getIncludePreludes()) {
                         appendElement(sb, INDENT6, "include-prelude", prelude);
@@ -993,14 +1145,14 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                         appendElement(sb, INDENT6, "include-coda", coda);
                     }
                     appendElement(sb, INDENT6, "deferred-syntax-allowed-as-literal",
-                            jpg.getDeferredSyntax());
+                        jpg.getDeferredSyntax());
                     appendElement(sb, INDENT6, "trim-directive-whitespaces",
-                            jpg.getTrimWhitespace());
+                        jpg.getTrimWhitespace());
                     appendElement(sb, INDENT6, "default-content-type",
-                            jpg.getDefaultContentType());
+                        jpg.getDefaultContentType());
                     appendElement(sb, INDENT6, "buffer", jpg.getBuffer());
                     appendElement(sb, INDENT6, "error-on-undeclared-namespace",
-                            jpg.getErrorOnUndeclaredNamespace());
+                        jpg.getErrorOnUndeclaredNamespace());
                     sb.append("    </jsp-property-group>\n");
                 }
                 sb.append("  </jsp-config>\n\n");
@@ -1012,20 +1164,20 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
             for (ContextResourceEnvRef resourceEnvRef : resourceEnvRefs.values()) {
                 sb.append("  <resource-env-ref>\n");
                 appendElement(sb, INDENT4, "description",
-                        resourceEnvRef.getDescription());
+                    resourceEnvRef.getDescription());
                 appendElement(sb, INDENT4, "resource-env-ref-name",
-                        resourceEnvRef.getName());
+                    resourceEnvRef.getName());
                 appendElement(sb, INDENT4, "resource-env-ref-type",
-                        resourceEnvRef.getType());
+                    resourceEnvRef.getType());
                 appendElement(sb, INDENT4, "mapped-name",
-                        resourceEnvRef.getProperty("mappedName"));
+                    resourceEnvRef.getProperty("mappedName"));
                 for (InjectionTarget target :
-                        resourceEnvRef.getInjectionTargets()) {
+                    resourceEnvRef.getInjectionTargets()) {
                     sb.append("    <injection-target>\n");
                     appendElement(sb, INDENT6, "injection-target-class",
-                            target.getTargetClass());
+                        target.getTargetClass());
                     appendElement(sb, INDENT6, "injection-target-name",
-                            target.getTargetName());
+                        target.getTargetName());
                     sb.append("    </injection-target>\n");
                 }
                 appendElement(sb, INDENT4, "lookup-name", resourceEnvRef.getLookupName());
@@ -1037,7 +1189,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
         for (ContextResource resourceRef : resourceRefs.values()) {
             sb.append("  <resource-ref>\n");
             appendElement(sb, INDENT4, "description",
-                    resourceRef.getDescription());
+                resourceRef.getDescription());
             appendElement(sb, INDENT4, "res-ref-name", resourceRef.getName());
             appendElement(sb, INDENT4, "res-type", resourceRef.getType());
             appendElement(sb, INDENT4, "res-auth", resourceRef.getAuth());
@@ -1049,9 +1201,9 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
             for (InjectionTarget target : resourceRef.getInjectionTargets()) {
                 sb.append("    <injection-target>\n");
                 appendElement(sb, INDENT6, "injection-target-class",
-                        target.getTargetClass());
+                    target.getTargetClass());
                 appendElement(sb, INDENT6, "injection-target-name",
-                        target.getTargetName());
+                    target.getTargetName());
                 sb.append("    </injection-target>\n");
             }
             appendElement(sb, INDENT4, "lookup-name", resourceRef.getLookupName());
@@ -1064,14 +1216,14 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
             // security-constraint/display-name was introduced in Servlet 2.3
             if (getMajorVersion() > 2 || getMinorVersion() > 2) {
                 appendElement(sb, INDENT4, "display-name",
-                        constraint.getDisplayName());
+                    constraint.getDisplayName());
             }
             for (SecurityCollection collection : constraint.findCollections()) {
                 sb.append("    <web-resource-collection>\n");
                 appendElement(sb, INDENT6, "web-resource-name",
-                        collection.getName());
+                    collection.getName());
                 appendElement(sb, INDENT6, "description",
-                        collection.getDescription());
+                    collection.getDescription());
                 for (String urlPattern : collection.findPatterns()) {
                     appendElement(sb, INDENT6, "url-pattern", encodeUrl(urlPattern));
                 }
@@ -1093,7 +1245,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
             if (constraint.getUserConstraint() != null) {
                 sb.append("    <user-data-constraint>\n");
                 appendElement(sb, INDENT6, "transport-guarantee",
-                        constraint.getUserConstraint());
+                    constraint.getUserConstraint());
                 sb.append("    </user-data-constraint>\n");
             }
             sb.append("  </security-constraint>\n");
@@ -1103,16 +1255,16 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
         if (loginConfig != null) {
             sb.append("  <login-config>\n");
             appendElement(sb, INDENT4, "auth-method",
-                    loginConfig.getAuthMethod());
-            appendElement(sb,INDENT4, "realm-name",
-                    loginConfig.getRealmName());
+                loginConfig.getAuthMethod());
+            appendElement(sb, INDENT4, "realm-name",
+                loginConfig.getRealmName());
             if (loginConfig.getErrorPage() != null ||
-                        loginConfig.getLoginPage() != null) {
+                loginConfig.getLoginPage() != null) {
                 sb.append("    <form-login-config>\n");
                 appendElement(sb, INDENT6, "form-login-page",
-                        loginConfig.getLoginPage());
+                    loginConfig.getLoginPage());
                 appendElement(sb, INDENT6, "form-error-page",
-                        loginConfig.getErrorPage());
+                    loginConfig.getErrorPage());
                 sb.append("    </form-login-config>\n");
             }
             sb.append("  </login-config>\n\n");
@@ -1127,7 +1279,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
         for (ContextEnvironment envEntry : envEntries.values()) {
             sb.append("  <env-entry>\n");
             appendElement(sb, INDENT4, "description",
-                    envEntry.getDescription());
+                envEntry.getDescription());
             appendElement(sb, INDENT4, "env-entry-name", envEntry.getName());
             appendElement(sb, INDENT4, "env-entry-type", envEntry.getType());
             appendElement(sb, INDENT4, "env-entry-value", envEntry.getValue());
@@ -1135,9 +1287,9 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
             for (InjectionTarget target : envEntry.getInjectionTargets()) {
                 sb.append("    <injection-target>\n");
                 appendElement(sb, INDENT6, "injection-target-class",
-                        target.getTargetClass());
+                    target.getTargetClass());
                 appendElement(sb, INDENT6, "injection-target-name",
-                        target.getTargetName());
+                    target.getTargetName());
                 sb.append("    </injection-target>\n");
             }
             appendElement(sb, INDENT4, "lookup-name", envEntry.getLookupName());
@@ -1157,9 +1309,9 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
             for (InjectionTarget target : ejbRef.getInjectionTargets()) {
                 sb.append("    <injection-target>\n");
                 appendElement(sb, INDENT6, "injection-target-class",
-                        target.getTargetClass());
+                    target.getTargetClass());
                 appendElement(sb, INDENT6, "injection-target-name",
-                        target.getTargetName());
+                    target.getTargetName());
                 sb.append("    </injection-target>\n");
             }
             appendElement(sb, INDENT4, "lookup-name", ejbRef.getLookupName());
@@ -1172,7 +1324,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
             for (ContextLocalEjb ejbLocalRef : ejbLocalRefs.values()) {
                 sb.append("  <ejb-local-ref>\n");
                 appendElement(sb, INDENT4, "description",
-                        ejbLocalRef.getDescription());
+                    ejbLocalRef.getDescription());
                 appendElement(sb, INDENT4, "ejb-ref-name", ejbLocalRef.getName());
                 appendElement(sb, INDENT4, "ejb-ref-type", ejbLocalRef.getType());
                 appendElement(sb, INDENT4, "local-home", ejbLocalRef.getHome());
@@ -1182,9 +1334,9 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                 for (InjectionTarget target : ejbLocalRef.getInjectionTargets()) {
                     sb.append("    <injection-target>\n");
                     appendElement(sb, INDENT6, "injection-target-class",
-                            target.getTargetClass());
+                        target.getTargetClass());
                     appendElement(sb, INDENT6, "injection-target-name",
-                            target.getTargetName());
+                        target.getTargetName());
                     sb.append("    </injection-target>\n");
                 }
                 appendElement(sb, INDENT4, "lookup-name", ejbLocalRef.getLookupName());
@@ -1198,18 +1350,18 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
             for (ContextService serviceRef : serviceRefs.values()) {
                 sb.append("  <service-ref>\n");
                 appendElement(sb, INDENT4, "description",
-                        serviceRef.getDescription());
+                    serviceRef.getDescription());
                 appendElement(sb, INDENT4, "display-name",
-                        serviceRef.getDisplayname());
+                    serviceRef.getDisplayname());
                 appendElement(sb, INDENT4, "service-ref-name",
-                        serviceRef.getName());
+                    serviceRef.getName());
                 appendElement(sb, INDENT4, "service-interface",
-                        serviceRef.getInterface());
+                    serviceRef.getInterface());
                 appendElement(sb, INDENT4, "service-ref-type",
-                        serviceRef.getType());
+                    serviceRef.getType());
                 appendElement(sb, INDENT4, "wsdl-file", serviceRef.getWsdlfile());
                 appendElement(sb, INDENT4, "jaxrpc-mapping-file",
-                        serviceRef.getJaxrpcmappingfile());
+                    serviceRef.getJaxrpcmappingfile());
                 String qname = serviceRef.getServiceqnameNamespaceURI();
                 if (qname != null) {
                     qname = qname + ":";
@@ -1221,9 +1373,9 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                     String endpoint = endpointIter.next();
                     sb.append("    <port-component-ref>\n");
                     appendElement(sb, INDENT6, "service-endpoint-interface",
-                            endpoint);
+                        endpoint);
                     appendElement(sb, INDENT6, "port-component-link",
-                            serviceRef.getProperty(endpoint));
+                        serviceRef.getProperty(endpoint));
                     sb.append("    </port-component-ref>\n");
                 }
                 Iterator<String> handlerIter = serviceRef.getHandlers();
@@ -1233,7 +1385,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                     ContextHandler ch = serviceRef.getHandler(handler);
                     appendElement(sb, INDENT6, "handler-name", ch.getName());
                     appendElement(sb, INDENT6, "handler-class",
-                            ch.getHandlerclass());
+                        ch.getHandlerclass());
                     sb.append("    </handler>\n");
                 }
                 // TODO handler-chains
@@ -1241,9 +1393,9 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                 for (InjectionTarget target : serviceRef.getInjectionTargets()) {
                     sb.append("    <injection-target>\n");
                     appendElement(sb, INDENT6, "injection-target-class",
-                            target.getTargetClass());
+                        target.getTargetClass());
                     appendElement(sb, INDENT6, "injection-target-name",
-                            target.getTargetName());
+                        target.getTargetName());
                     sb.append("    </injection-target>\n");
                 }
                 appendElement(sb, INDENT4, "lookup-name", serviceRef.getLookupName());
@@ -1254,12 +1406,12 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
 
         if (!postConstructMethods.isEmpty()) {
             for (Entry<String, String> entry : postConstructMethods
-                    .entrySet()) {
+                .entrySet()) {
                 sb.append("  <post-construct>\n");
                 appendElement(sb, INDENT4, "lifecycle-callback-class",
-                        entry.getKey());
+                    entry.getKey());
                 appendElement(sb, INDENT4, "lifecycle-callback-method",
-                        entry.getValue());
+                    entry.getValue());
                 sb.append("  </post-construct>\n");
             }
             sb.append('\n');
@@ -1267,12 +1419,12 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
 
         if (!preDestroyMethods.isEmpty()) {
             for (Entry<String, String> entry : preDestroyMethods
-                    .entrySet()) {
+                .entrySet()) {
                 sb.append("  <pre-destroy>\n");
                 appendElement(sb, INDENT4, "lifecycle-callback-class",
-                        entry.getKey());
+                    entry.getKey());
                 appendElement(sb, INDENT4, "lifecycle-callback-method",
-                        entry.getValue());
+                    entry.getValue());
                 sb.append("  </pre-destroy>\n");
             }
             sb.append('\n');
@@ -1285,20 +1437,20 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                 sb.append("  <message-destination-ref>\n");
                 appendElement(sb, INDENT4, "description", mdr.getDescription());
                 appendElement(sb, INDENT4, "message-destination-ref-name",
-                        mdr.getName());
+                    mdr.getName());
                 appendElement(sb, INDENT4, "message-destination-type",
-                        mdr.getType());
+                    mdr.getType());
                 appendElement(sb, INDENT4, "message-destination-usage",
-                        mdr.getUsage());
+                    mdr.getUsage());
                 appendElement(sb, INDENT4, "message-destination-link",
-                        mdr.getLink());
+                    mdr.getLink());
                 appendElement(sb, INDENT4, "mapped-name", mdr.getProperty("mappedName"));
                 for (InjectionTarget target : mdr.getInjectionTargets()) {
                     sb.append("    <injection-target>\n");
                     appendElement(sb, INDENT6, "injection-target-class",
-                            target.getTargetClass());
+                        target.getTargetClass());
                     appendElement(sb, INDENT6, "injection-target-name",
-                            target.getTargetName());
+                        target.getTargetName());
                     sb.append("    </injection-target>\n");
                 }
                 appendElement(sb, INDENT4, "lookup-name", mdr.getLookupName());
@@ -1311,7 +1463,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                 appendElement(sb, INDENT4, "description", md.getDescription());
                 appendElement(sb, INDENT4, "display-name", md.getDisplayName());
                 appendElement(sb, INDENT4, "message-destination-name",
-                        md.getName());
+                    md.getName());
                 appendElement(sb, INDENT4, "mapped-name", md.getProperty("mappedName"));
                 appendElement(sb, INDENT4, "lookup-name", md.getLookupName());
                 sb.append("  </message-destination>\n");
@@ -1324,7 +1476,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
             if (localeEncodingMappings.size() > 0) {
                 sb.append("  <locale-encoding-mapping-list>\n");
                 for (Map.Entry<String, String> entry :
-                        localeEncodingMappings.entrySet()) {
+                    localeEncodingMappings.entrySet()) {
                     sb.append("    <locale-encoding-mapping>\n");
                     appendElement(sb, INDENT6, "locale", entry.getKey());
                     appendElement(sb, INDENT6, "encoding", entry.getValue());
@@ -1336,7 +1488,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
 
         // deny-uncovered-http-methods was introduced in Servlet 3.1
         if (getMajorVersion() > 3 ||
-                (getMajorVersion() == 3 && getMinorVersion() > 0)) {
+            (getMajorVersion() == 3 && getMinorVersion() > 0)) {
             if (denyUncoveredHttpMethods) {
                 sb.append("\n");
                 sb.append("  <deny-uncovered-http-methods/>");
@@ -1359,7 +1511,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
 
 
     private static void appendElement(StringBuilder sb, String indent,
-            String elementName, String value) {
+                                      String elementName, String value) {
         if (value == null) {
             return;
         }
@@ -1381,7 +1533,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
     }
 
     private static void appendElement(StringBuilder sb, String indent,
-            String elementName, Object value) {
+                                      String elementName, Object value) {
         if (value == null) {
             return;
         }
@@ -1392,9 +1544,9 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
     /**
      * Merge the supplied web fragments into this main web.xml.
      *
-     * @param fragments     The fragments to merge in
+     * @param fragments The fragments to merge in
      * @return <code>true</code> if merge is successful, else
-     *         <code>false</code>
+     * <code>false</code>
      */
     public boolean merge(Set<WebXml> fragments) {
         // As far as possible, process in alphabetical order so it is easy to
@@ -1406,7 +1558,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
 
         for (WebXml fragment : fragments) {
             if (!mergeMap(fragment.getContextParams(), contextParams,
-                    temp.getContextParams(), fragment, "Context Parameter")) {
+                temp.getContextParams(), fragment, "Context Parameter")) {
                 return false;
             }
         }
@@ -1420,9 +1572,9 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                         temp.setDisplayName(value);
                     } else {
                         log.error(sm.getString(
-                                "webXml.mergeConflictDisplayName",
-                                fragment.getName(),
-                                fragment.getURL()));
+                            "webXml.mergeConflictDisplayName",
+                            fragment.getName(),
+                            fragment.getURL()));
                         return false;
                     }
                 }
@@ -1452,7 +1604,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
 
         for (WebXml fragment : fragments) {
             if (!mergeResourceMap(fragment.getEjbLocalRefs(), ejbLocalRefs,
-                    temp.getEjbLocalRefs(), fragment)) {
+                temp.getEjbLocalRefs(), fragment)) {
                 return false;
             }
         }
@@ -1460,7 +1612,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
 
         for (WebXml fragment : fragments) {
             if (!mergeResourceMap(fragment.getEjbRefs(), ejbRefs,
-                    temp.getEjbRefs(), fragment)) {
+                temp.getEjbRefs(), fragment)) {
                 return false;
             }
         }
@@ -1468,7 +1620,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
 
         for (WebXml fragment : fragments) {
             if (!mergeResourceMap(fragment.getEnvEntries(), envEntries,
-                    temp.getEnvEntries(), fragment)) {
+                temp.getEnvEntries(), fragment)) {
                 return false;
             }
         }
@@ -1476,7 +1628,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
 
         for (WebXml fragment : fragments) {
             if (!mergeMap(fragment.getErrorPages(), errorPages,
-                    temp.getErrorPages(), fragment, "Error Page")) {
+                temp.getErrorPages(), fragment, "Error Page")) {
                 return false;
             }
         }
@@ -1499,20 +1651,20 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
         }
 
         for (WebXml fragment : fragments) {
-            for (Map.Entry<String,FilterDef> entry :
-                    fragment.getFilters().entrySet()) {
+            for (Map.Entry<String, FilterDef> entry :
+                fragment.getFilters().entrySet()) {
                 if (filters.containsKey(entry.getKey())) {
                     mergeFilter(entry.getValue(),
-                            filters.get(entry.getKey()), false);
+                        filters.get(entry.getKey()), false);
                 } else {
                     if (temp.getFilters().containsKey(entry.getKey())) {
                         if (!(mergeFilter(entry.getValue(),
-                                temp.getFilters().get(entry.getKey()), true))) {
+                            temp.getFilters().get(entry.getKey()), true))) {
                             log.error(sm.getString(
-                                    "webXml.mergeConflictFilter",
-                                    entry.getKey(),
-                                    fragment.getName(),
-                                    fragment.getURL()));
+                                "webXml.mergeConflictFilter",
+                                entry.getKey(),
+                                fragment.getName(),
+                                fragment.getURL()));
 
                             return false;
                         }
@@ -1526,7 +1678,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
 
         for (WebXml fragment : fragments) {
             for (JspPropertyGroup jspPropertyGroup :
-                    fragment.getJspPropertyGroups()) {
+                fragment.getJspPropertyGroups()) {
                 // Always additive
                 addJspPropertyGroup(jspPropertyGroup);
             }
@@ -1541,8 +1693,8 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
 
         for (WebXml fragment : fragments) {
             if (!mergeMap(fragment.getLocaleEncodingMappings(),
-                    localeEncodingMappings, temp.getLocaleEncodingMappings(),
-                    fragment, "Locale Encoding Mapping")) {
+                localeEncodingMappings, temp.getLocaleEncodingMappings(),
+                fragment, "Locale Encoding Mapping")) {
                 return false;
             }
         }
@@ -1554,13 +1706,13 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                 LoginConfig fragmentLoginConfig = fragment.loginConfig;
                 if (fragmentLoginConfig != null) {
                     if (tempLoginConfig == null ||
-                            fragmentLoginConfig.equals(tempLoginConfig)) {
+                        fragmentLoginConfig.equals(tempLoginConfig)) {
                         tempLoginConfig = fragmentLoginConfig;
                     } else {
                         log.error(sm.getString(
-                                "webXml.mergeConflictLoginConfig",
-                                fragment.getName(),
-                                fragment.getURL()));
+                            "webXml.mergeConflictLoginConfig",
+                            fragment.getName(),
+                            fragment.getURL()));
                     }
                 }
             }
@@ -1569,7 +1721,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
 
         for (WebXml fragment : fragments) {
             if (!mergeResourceMap(fragment.getMessageDestinationRefs(), messageDestinationRefs,
-                    temp.getMessageDestinationRefs(), fragment)) {
+                temp.getMessageDestinationRefs(), fragment)) {
                 return false;
             }
         }
@@ -1577,7 +1729,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
 
         for (WebXml fragment : fragments) {
             if (!mergeResourceMap(fragment.getMessageDestinations(), messageDestinations,
-                    temp.getMessageDestinations(), fragment)) {
+                temp.getMessageDestinations(), fragment)) {
                 return false;
             }
         }
@@ -1585,7 +1737,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
 
         for (WebXml fragment : fragments) {
             if (!mergeMap(fragment.getMimeMappings(), mimeMappings,
-                    temp.getMimeMappings(), fragment, "Mime Mapping")) {
+                temp.getMimeMappings(), fragment, "Mime Mapping")) {
                 return false;
             }
         }
@@ -1593,7 +1745,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
 
         for (WebXml fragment : fragments) {
             if (!mergeResourceMap(fragment.getResourceEnvRefs(), resourceEnvRefs,
-                    temp.getResourceEnvRefs(), fragment)) {
+                temp.getResourceEnvRefs(), fragment)) {
                 return false;
             }
         }
@@ -1601,7 +1753,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
 
         for (WebXml fragment : fragments) {
             if (!mergeResourceMap(fragment.getResourceRefs(), resourceRefs,
-                    temp.getResourceRefs(), fragment)) {
+                temp.getResourceRefs(), fragment)) {
                 return false;
             }
         }
@@ -1623,7 +1775,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
 
         for (WebXml fragment : fragments) {
             if (!mergeResourceMap(fragment.getServiceRefs(), serviceRefs,
-                    temp.getServiceRefs(), fragment)) {
+                temp.getServiceRefs(), fragment)) {
                 return false;
             }
         }
@@ -1634,37 +1786,37 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
         // fragments override those in annotations
         // Skip servlet definitions and mappings from fragments that are
         // defined in web.xml
-        List<Map.Entry<String,String>> servletMappingsToAdd = new ArrayList<>();
+        List<Map.Entry<String, String>> servletMappingsToAdd = new ArrayList<>();
         for (WebXml fragment : fragments) {
-            for (Map.Entry<String,String> servletMap :
-                    fragment.getServletMappings().entrySet()) {
+            for (Map.Entry<String, String> servletMap :
+                fragment.getServletMappings().entrySet()) {
                 if (!servletMappingNames.contains(servletMap.getValue()) &&
-                        !servletMappings.containsKey(servletMap.getKey())) {
+                    !servletMappings.containsKey(servletMap.getKey())) {
                     servletMappingsToAdd.add(servletMap);
                 }
             }
         }
 
         // Add fragment mappings
-        for (Map.Entry<String,String> mapping : servletMappingsToAdd) {
+        for (Map.Entry<String, String> mapping : servletMappingsToAdd) {
             addServletMappingDecoded(mapping.getKey(), mapping.getValue());
         }
 
         for (WebXml fragment : fragments) {
-            for (Map.Entry<String,ServletDef> entry :
-                    fragment.getServlets().entrySet()) {
+            for (Map.Entry<String, ServletDef> entry :
+                fragment.getServlets().entrySet()) {
                 if (servlets.containsKey(entry.getKey())) {
                     mergeServlet(entry.getValue(),
-                            servlets.get(entry.getKey()), false);
+                        servlets.get(entry.getKey()), false);
                 } else {
                     if (temp.getServlets().containsKey(entry.getKey())) {
                         if (!(mergeServlet(entry.getValue(),
-                                temp.getServlets().get(entry.getKey()), true))) {
+                            temp.getServlets().get(entry.getKey()), true))) {
                             log.error(sm.getString(
-                                    "webXml.mergeConflictServlet",
-                                    entry.getKey(),
-                                    fragment.getName(),
-                                    fragment.getURL()));
+                                "webXml.mergeConflictServlet",
+                                entry.getKey(),
+                                fragment.getName(),
+                                fragment.getURL()));
 
                             return false;
                         }
@@ -1683,20 +1835,20 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                     if (temp.getSessionConfig().getSessionTimeout() == null) {
                         temp.getSessionConfig().setSessionTimeout(value.toString());
                     } else if (value.equals(
-                            temp.getSessionConfig().getSessionTimeout())) {
+                        temp.getSessionConfig().getSessionTimeout())) {
                         // Fragments use same value - no conflict
                     } else {
                         log.error(sm.getString(
-                                "webXml.mergeConflictSessionTimeout",
-                                fragment.getName(),
-                                fragment.getURL()));
+                            "webXml.mergeConflictSessionTimeout",
+                            fragment.getName(),
+                            fragment.getURL()));
                         return false;
                     }
                 }
             }
             if (temp.getSessionConfig().getSessionTimeout() != null) {
                 sessionConfig.setSessionTimeout(
-                        temp.getSessionConfig().getSessionTimeout().toString());
+                    temp.getSessionConfig().getSessionTimeout().toString());
             }
         }
 
@@ -1707,19 +1859,19 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                     if (temp.getSessionConfig().getCookieName() == null) {
                         temp.getSessionConfig().setCookieName(value);
                     } else if (value.equals(
-                            temp.getSessionConfig().getCookieName())) {
+                        temp.getSessionConfig().getCookieName())) {
                         // Fragments use same value - no conflict
                     } else {
                         log.error(sm.getString(
-                                "webXml.mergeConflictSessionCookieName",
-                                fragment.getName(),
-                                fragment.getURL()));
+                            "webXml.mergeConflictSessionCookieName",
+                            fragment.getName(),
+                            fragment.getURL()));
                         return false;
                     }
                 }
             }
             sessionConfig.setCookieName(
-                    temp.getSessionConfig().getCookieName());
+                temp.getSessionConfig().getCookieName());
         }
         if (sessionConfig.getCookieDomain() == null) {
             for (WebXml fragment : fragments) {
@@ -1728,19 +1880,19 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                     if (temp.getSessionConfig().getCookieDomain() == null) {
                         temp.getSessionConfig().setCookieDomain(value);
                     } else if (value.equals(
-                            temp.getSessionConfig().getCookieDomain())) {
+                        temp.getSessionConfig().getCookieDomain())) {
                         // Fragments use same value - no conflict
                     } else {
                         log.error(sm.getString(
-                                "webXml.mergeConflictSessionCookieDomain",
-                                fragment.getName(),
-                                fragment.getURL()));
+                            "webXml.mergeConflictSessionCookieDomain",
+                            fragment.getName(),
+                            fragment.getURL()));
                         return false;
                     }
                 }
             }
             sessionConfig.setCookieDomain(
-                    temp.getSessionConfig().getCookieDomain());
+                temp.getSessionConfig().getCookieDomain());
         }
         if (sessionConfig.getCookiePath() == null) {
             for (WebXml fragment : fragments) {
@@ -1749,19 +1901,19 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                     if (temp.getSessionConfig().getCookiePath() == null) {
                         temp.getSessionConfig().setCookiePath(value);
                     } else if (value.equals(
-                            temp.getSessionConfig().getCookiePath())) {
+                        temp.getSessionConfig().getCookiePath())) {
                         // Fragments use same value - no conflict
                     } else {
                         log.error(sm.getString(
-                                "webXml.mergeConflictSessionCookiePath",
-                                fragment.getName(),
-                                fragment.getURL()));
+                            "webXml.mergeConflictSessionCookiePath",
+                            fragment.getName(),
+                            fragment.getURL()));
                         return false;
                     }
                 }
             }
             sessionConfig.setCookiePath(
-                    temp.getSessionConfig().getCookiePath());
+                temp.getSessionConfig().getCookiePath());
         }
         if (sessionConfig.getCookieComment() == null) {
             for (WebXml fragment : fragments) {
@@ -1770,19 +1922,19 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                     if (temp.getSessionConfig().getCookieComment() == null) {
                         temp.getSessionConfig().setCookieComment(value);
                     } else if (value.equals(
-                            temp.getSessionConfig().getCookieComment())) {
+                        temp.getSessionConfig().getCookieComment())) {
                         // Fragments use same value - no conflict
                     } else {
                         log.error(sm.getString(
-                                "webXml.mergeConflictSessionCookieComment",
-                                fragment.getName(),
-                                fragment.getURL()));
+                            "webXml.mergeConflictSessionCookieComment",
+                            fragment.getName(),
+                            fragment.getURL()));
                         return false;
                     }
                 }
             }
             sessionConfig.setCookieComment(
-                    temp.getSessionConfig().getCookieComment());
+                temp.getSessionConfig().getCookieComment());
         }
         if (sessionConfig.getCookieHttpOnly() == null) {
             for (WebXml fragment : fragments) {
@@ -1791,20 +1943,20 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                     if (temp.getSessionConfig().getCookieHttpOnly() == null) {
                         temp.getSessionConfig().setCookieHttpOnly(value.toString());
                     } else if (value.equals(
-                            temp.getSessionConfig().getCookieHttpOnly())) {
+                        temp.getSessionConfig().getCookieHttpOnly())) {
                         // Fragments use same value - no conflict
                     } else {
                         log.error(sm.getString(
-                                "webXml.mergeConflictSessionCookieHttpOnly",
-                                fragment.getName(),
-                                fragment.getURL()));
+                            "webXml.mergeConflictSessionCookieHttpOnly",
+                            fragment.getName(),
+                            fragment.getURL()));
                         return false;
                     }
                 }
             }
             if (temp.getSessionConfig().getCookieHttpOnly() != null) {
                 sessionConfig.setCookieHttpOnly(
-                        temp.getSessionConfig().getCookieHttpOnly().toString());
+                    temp.getSessionConfig().getCookieHttpOnly().toString());
             }
         }
         if (sessionConfig.getCookieSecure() == null) {
@@ -1814,20 +1966,20 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                     if (temp.getSessionConfig().getCookieSecure() == null) {
                         temp.getSessionConfig().setCookieSecure(value.toString());
                     } else if (value.equals(
-                            temp.getSessionConfig().getCookieSecure())) {
+                        temp.getSessionConfig().getCookieSecure())) {
                         // Fragments use same value - no conflict
                     } else {
                         log.error(sm.getString(
-                                "webXml.mergeConflictSessionCookieSecure",
-                                fragment.getName(),
-                                fragment.getURL()));
+                            "webXml.mergeConflictSessionCookieSecure",
+                            fragment.getName(),
+                            fragment.getURL()));
                         return false;
                     }
                 }
             }
             if (temp.getSessionConfig().getCookieSecure() != null) {
                 sessionConfig.setCookieSecure(
-                        temp.getSessionConfig().getCookieSecure().toString());
+                    temp.getSessionConfig().getCookieSecure().toString());
             }
         }
         if (sessionConfig.getCookieMaxAge() == null) {
@@ -1837,20 +1989,20 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                     if (temp.getSessionConfig().getCookieMaxAge() == null) {
                         temp.getSessionConfig().setCookieMaxAge(value.toString());
                     } else if (value.equals(
-                            temp.getSessionConfig().getCookieMaxAge())) {
+                        temp.getSessionConfig().getCookieMaxAge())) {
                         // Fragments use same value - no conflict
                     } else {
                         log.error(sm.getString(
-                                "webXml.mergeConflictSessionCookieMaxAge",
-                                fragment.getName(),
-                                fragment.getURL()));
+                            "webXml.mergeConflictSessionCookieMaxAge",
+                            fragment.getName(),
+                            fragment.getURL()));
                         return false;
                     }
                 }
             }
             if (temp.getSessionConfig().getCookieMaxAge() != null) {
                 sessionConfig.setCookieMaxAge(
-                        temp.getSessionConfig().getCookieMaxAge().toString());
+                    temp.getSessionConfig().getCookieMaxAge().toString());
             }
         }
 
@@ -1862,24 +2014,24 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                     if (temp.getSessionConfig().getSessionTrackingModes().size() == 0) {
                         temp.getSessionConfig().getSessionTrackingModes().addAll(value);
                     } else if (value.equals(
-                            temp.getSessionConfig().getSessionTrackingModes())) {
+                        temp.getSessionConfig().getSessionTrackingModes())) {
                         // Fragments use same value - no conflict
                     } else {
                         log.error(sm.getString(
-                                "webXml.mergeConflictSessionTrackingMode",
-                                fragment.getName(),
-                                fragment.getURL()));
+                            "webXml.mergeConflictSessionTrackingMode",
+                            fragment.getName(),
+                            fragment.getURL()));
                         return false;
                     }
                 }
             }
             sessionConfig.getSessionTrackingModes().addAll(
-                    temp.getSessionConfig().getSessionTrackingModes());
+                temp.getSessionConfig().getSessionTrackingModes());
         }
 
         for (WebXml fragment : fragments) {
             if (!mergeMap(fragment.getTaglibs(), taglibs,
-                    temp.getTaglibs(), fragment, "Taglibs")) {
+                temp.getTaglibs(), fragment, "Taglibs")) {
                 return false;
             }
         }
@@ -1896,8 +2048,8 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
         if (postConstructMethods.isEmpty()) {
             for (WebXml fragment : fragments) {
                 if (!mergeLifecycleCallback(fragment.getPostConstructMethods(),
-                        temp.getPostConstructMethods(), fragment,
-                        "Post Construct Methods")) {
+                    temp.getPostConstructMethods(), fragment,
+                    "Post Construct Methods")) {
                     return false;
                 }
             }
@@ -1907,8 +2059,8 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
         if (preDestroyMethods.isEmpty()) {
             for (WebXml fragment : fragments) {
                 if (!mergeLifecycleCallback(fragment.getPreDestroyMethods(),
-                        temp.getPreDestroyMethods(), fragment,
-                        "Pre Destroy Methods")) {
+                    temp.getPreDestroyMethods(), fragment,
+                    "Pre Destroy Methods")) {
                     return false;
                 }
             }
@@ -1919,23 +2071,23 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
     }
 
     private <T extends ResourceBase> boolean mergeResourceMap(
-            Map<String, T> fragmentResources, Map<String, T> mainResources,
-            Map<String, T> tempResources, WebXml fragment) {
+        Map<String, T> fragmentResources, Map<String, T> mainResources,
+        Map<String, T> tempResources, WebXml fragment) {
         for (T resource : fragmentResources.values()) {
             String resourceName = resource.getName();
             if (mainResources.containsKey(resourceName)) {
                 mainResources.get(resourceName).getInjectionTargets().addAll(
-                        resource.getInjectionTargets());
+                    resource.getInjectionTargets());
             } else {
                 // Not defined in main web.xml
                 T existingResource = tempResources.get(resourceName);
                 if (existingResource != null) {
                     if (!existingResource.equals(resource)) {
                         log.error(sm.getString(
-                                "webXml.mergeConflictResource",
-                                resourceName,
-                                fragment.getName(),
-                                fragment.getURL()));
+                            "webXml.mergeConflictResource",
+                            resourceName,
+                            fragment.getName(),
+                            fragment.getURL()));
                         return false;
                     }
                 } else {
@@ -1946,9 +2098,9 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
         return true;
     }
 
-    private <T> boolean mergeMap(Map<String,T> fragmentMap,
-            Map<String,T> mainMap, Map<String,T> tempMap, WebXml fragment,
-            String mapName) {
+    private <T> boolean mergeMap(Map<String, T> fragmentMap,
+                                 Map<String, T> mainMap, Map<String, T> tempMap, WebXml fragment,
+                                 String mapName) {
         for (Entry<String, T> entry : fragmentMap.entrySet()) {
             final String key = entry.getKey();
             if (!mainMap.containsKey(key)) {
@@ -1956,13 +2108,13 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                 T value = entry.getValue();
                 if (tempMap.containsKey(key)) {
                     if (value != null && !value.equals(
-                            tempMap.get(key))) {
+                        tempMap.get(key))) {
                         log.error(sm.getString(
-                                "webXml.mergeConflictString",
-                                mapName,
-                                key,
-                                fragment.getName(),
-                                fragment.getURL()));
+                            "webXml.mergeConflictString",
+                            mapName,
+                            key,
+                            fragment.getName(),
+                            fragment.getURL()));
                         return false;
                     }
                 } else {
@@ -1974,30 +2126,30 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
     }
 
     private static boolean mergeFilter(FilterDef src, FilterDef dest,
-            boolean failOnConflict) {
+                                       boolean failOnConflict) {
         if (dest.getAsyncSupported() == null) {
             dest.setAsyncSupported(src.getAsyncSupported());
         } else if (src.getAsyncSupported() != null) {
             if (failOnConflict &&
-                    !src.getAsyncSupported().equals(dest.getAsyncSupported())) {
+                !src.getAsyncSupported().equals(dest.getAsyncSupported())) {
                 return false;
             }
         }
 
-        if (dest.getFilterClass()  == null) {
+        if (dest.getFilterClass() == null) {
             dest.setFilterClass(src.getFilterClass());
         } else if (src.getFilterClass() != null) {
             if (failOnConflict &&
-                    !src.getFilterClass().equals(dest.getFilterClass())) {
+                !src.getFilterClass().equals(dest.getFilterClass())) {
                 return false;
             }
         }
 
-        for (Map.Entry<String,String> srcEntry :
-                src.getParameterMap().entrySet()) {
+        for (Map.Entry<String, String> srcEntry :
+            src.getParameterMap().entrySet()) {
             if (dest.getParameterMap().containsKey(srcEntry.getKey())) {
                 if (failOnConflict && !dest.getParameterMap().get(
-                        srcEntry.getKey()).equals(srcEntry.getValue())) {
+                    srcEntry.getKey()).equals(srcEntry.getValue())) {
                     return false;
                 }
             } else {
@@ -2008,7 +2160,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
     }
 
     private static boolean mergeServlet(ServletDef src, ServletDef dest,
-            boolean failOnConflict) {
+                                        boolean failOnConflict) {
         // These tests should be unnecessary...
         if (dest.getServletClass() != null && dest.getJspFile() != null) {
             return false;
@@ -2023,13 +2175,13 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
             dest.setJspFile(src.getJspFile());
         } else if (failOnConflict) {
             if (src.getServletClass() != null &&
-                    (dest.getJspFile() != null ||
-                            !src.getServletClass().equals(dest.getServletClass()))) {
+                (dest.getJspFile() != null ||
+                    !src.getServletClass().equals(dest.getServletClass()))) {
                 return false;
             }
             if (src.getJspFile() != null &&
-                    (dest.getServletClass() != null ||
-                            !src.getJspFile().equals(dest.getJspFile()))) {
+                (dest.getServletClass() != null ||
+                    !src.getJspFile().equals(dest.getJspFile()))) {
                 return false;
             }
         }
@@ -2045,7 +2197,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
             }
         } else if (src.getLoadOnStartup() != null) {
             if (failOnConflict &&
-                    !src.getLoadOnStartup().equals(dest.getLoadOnStartup())) {
+                !src.getLoadOnStartup().equals(dest.getLoadOnStartup())) {
                 return false;
             }
         }
@@ -2056,16 +2208,16 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
             }
         } else if (src.getEnabled() != null) {
             if (failOnConflict &&
-                    !src.getEnabled().equals(dest.getEnabled())) {
+                !src.getEnabled().equals(dest.getEnabled())) {
                 return false;
             }
         }
 
-        for (Map.Entry<String,String> srcEntry :
-                src.getParameterMap().entrySet()) {
+        for (Map.Entry<String, String> srcEntry :
+            src.getParameterMap().entrySet()) {
             if (dest.getParameterMap().containsKey(srcEntry.getKey())) {
                 if (failOnConflict && !dest.getParameterMap().get(
-                        srcEntry.getKey()).equals(srcEntry.getValue())) {
+                    srcEntry.getKey()).equals(srcEntry.getValue())) {
                     return false;
                 }
             } else {
@@ -2077,7 +2229,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
             dest.setMultipartDef(src.getMultipartDef());
         } else if (src.getMultipartDef() != null) {
             return mergeMultipartDef(src.getMultipartDef(),
-                    dest.getMultipartDef(), failOnConflict);
+                dest.getMultipartDef(), failOnConflict);
         }
 
         if (dest.getAsyncSupported() == null) {
@@ -2086,7 +2238,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
             }
         } else if (src.getAsyncSupported() != null) {
             if (failOnConflict &&
-                    !src.getAsyncSupported().equals(dest.getAsyncSupported())) {
+                !src.getAsyncSupported().equals(dest.getAsyncSupported())) {
                 return false;
             }
         }
@@ -2095,13 +2247,13 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
     }
 
     private static boolean mergeMultipartDef(MultipartDef src, MultipartDef dest,
-            boolean failOnConflict) {
+                                             boolean failOnConflict) {
 
         if (dest.getLocation() == null) {
             dest.setLocation(src.getLocation());
         } else if (src.getLocation() != null) {
             if (failOnConflict &&
-                    !src.getLocation().equals(dest.getLocation())) {
+                !src.getLocation().equals(dest.getLocation())) {
                 return false;
             }
         }
@@ -2110,8 +2262,8 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
             dest.setFileSizeThreshold(src.getFileSizeThreshold());
         } else if (src.getFileSizeThreshold() != null) {
             if (failOnConflict &&
-                    !src.getFileSizeThreshold().equals(
-                            dest.getFileSizeThreshold())) {
+                !src.getFileSizeThreshold().equals(
+                    dest.getFileSizeThreshold())) {
                 return false;
             }
         }
@@ -2120,7 +2272,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
             dest.setMaxFileSize(src.getMaxFileSize());
         } else if (src.getMaxFileSize() != null) {
             if (failOnConflict &&
-                    !src.getMaxFileSize().equals(dest.getMaxFileSize())) {
+                !src.getMaxFileSize().equals(dest.getMaxFileSize())) {
                 return false;
             }
         }
@@ -2129,8 +2281,8 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
             dest.setMaxRequestSize(src.getMaxRequestSize());
         } else if (src.getMaxRequestSize() != null) {
             if (failOnConflict &&
-                    !src.getMaxRequestSize().equals(
-                            dest.getMaxRequestSize())) {
+                !src.getMaxRequestSize().equals(
+                    dest.getMaxRequestSize())) {
                 return false;
             }
         }
@@ -2140,15 +2292,15 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
 
 
     private boolean mergeLifecycleCallback(
-            Map<String, String> fragmentMap, Map<String, String> tempMap,
-            WebXml fragment, String mapName) {
+        Map<String, String> fragmentMap, Map<String, String> tempMap,
+        WebXml fragment, String mapName) {
         for (Entry<String, String> entry : fragmentMap.entrySet()) {
             final String key = entry.getKey();
             final String value = entry.getValue();
             if (tempMap.containsKey(key)) {
                 if (value != null && !value.equals(tempMap.get(key))) {
                     log.error(sm.getString("webXml.mergeConflictString",
-                            mapName, key, fragment.getName(), fragment.getURL()));
+                        mapName, key, fragment.getName(), fragment.getURL()));
                     return false;
                 }
             } else {
@@ -2171,13 +2323,13 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
      * @return Ordered list of web-fragment.xml files to process
      */
     public static Set<WebXml> orderWebFragments(WebXml application,
-            Map<String,WebXml> fragments, ServletContext servletContext) {
+                                                Map<String, WebXml> fragments, ServletContext servletContext) {
         return application.orderWebFragments(fragments, servletContext);
     }
 
 
-    private Set<WebXml> orderWebFragments(Map<String,WebXml> fragments,
-            ServletContext servletContext) {
+    private Set<WebXml> orderWebFragments(Map<String, WebXml> fragments,
+                                          ServletContext servletContext) {
 
         Set<WebXml> orderedFragments = new LinkedHashSet<>();
 
@@ -2205,7 +2357,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                     if (fragment != null) {
                         orderedFragments.add(fragment);
                     } else {
-                        log.warn(sm.getString("webXml.wrongFragmentName",requestedName));
+                        log.warn(sm.getString("webXml.wrongFragmentName", requestedName));
                     }
                 }
             }
@@ -2216,14 +2368,14 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
                     List<String> duplicates = fragment.getDuplicates();
                     duplicates.add(0, fragment.getURL().toString());
                     throw new IllegalArgumentException(
-                            sm.getString("webXml.duplicateFragment", fragment.getName(), duplicates));
+                        sm.getString("webXml.duplicateFragment", fragment.getName(), duplicates));
                 }
             }
             // Stage 1. Make all dependencies bi-directional - this makes the
             //          next stage simpler.
             for (WebXml fragment : fragments.values()) {
                 Iterator<String> before =
-                        fragment.getBeforeOrdering().iterator();
+                    fragment.getBeforeOrdering().iterator();
                 while (before.hasNext()) {
                     orderingPresent = true;
                     String beforeEntry = before.next();
@@ -2316,12 +2468,12 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
             List<String> orderedJarFileNames = null;
             if (orderingPresent) {
                 orderedJarFileNames = new ArrayList<>();
-                for (WebXml fragment: orderedFragments) {
+                for (WebXml fragment : orderedFragments) {
                     orderedJarFileNames.add(fragment.getJarName());
                 }
             }
             servletContext.setAttribute(ServletContext.ORDERED_LIBS,
-                    orderedJarFileNames);
+                orderedJarFileNames);
         }
 
         // The remainder of the processing needs to know about container
@@ -2356,8 +2508,9 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
             }
         }
     }
+
     private static void orderFragments(Set<WebXml> orderedFragments,
-            Set<WebXml> unordered) {
+                                       Set<WebXml> unordered) {
         Set<WebXml> addedThisRound = new HashSet<>();
         Set<WebXml> addedLastRound = new HashSet<>();
         while (unordered.size() > 0) {
@@ -2376,7 +2529,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
             if (addedThisRound.size() == 0) {
                 // Circular
                 throw new IllegalArgumentException(
-                        sm.getString("webXml.mergeConflictOrder"));
+                    sm.getString("webXml.mergeConflictOrder"));
             }
             addedLastRound.clear();
             addedLastRound.addAll(addedThisRound);
@@ -2385,7 +2538,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
     }
 
     private static void makeBeforeOthersExplicit(Set<String> beforeOrdering,
-            Map<String, WebXml> fragments) {
+                                                 Map<String, WebXml> fragments) {
         for (String before : beforeOrdering) {
             if (!before.equals(ORDER_OTHERS)) {
                 WebXml webXml = fragments.get(before);
@@ -2398,7 +2551,7 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
     }
 
     private static void makeAfterOthersExplicit(Set<String> afterOrdering,
-            Map<String, WebXml> fragments) {
+                                                Map<String, WebXml> fragments) {
         for (String after : afterOrdering) {
             if (!after.equals(ORDER_OTHERS)) {
                 WebXml webXml = fragments.get(after);

@@ -426,6 +426,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
         // Start our defined Container first
         if (engine != null) {
             synchronized (engine) {
+                // 解析web.xml的工作也在这里面
                 engine.start();
             }
         }
@@ -436,6 +437,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
             }
         }
 
+        // 处理Host、context、wrapper关联关系【每个Service有一个关联的MapperListener】
         mapperListener.start();
 
         // Start our defined Connectors second

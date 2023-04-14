@@ -16,42 +16,7 @@
  */
 package org.apache.catalina.core;
 
-import java.io.PrintStream;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Stack;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import javax.management.ListenerNotFoundException;
-import javax.management.MBeanNotificationInfo;
-import javax.management.Notification;
-import javax.management.NotificationBroadcasterSupport;
-import javax.management.NotificationEmitter;
-import javax.management.NotificationFilter;
-import javax.management.NotificationListener;
-import javax.management.ObjectName;
-import javax.servlet.MultipartConfigElement;
-import javax.servlet.Servlet;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.SingleThreadModel;
-import javax.servlet.UnavailableException;
-import javax.servlet.annotation.MultipartConfig;
-
-import org.apache.catalina.Container;
-import org.apache.catalina.ContainerServlet;
-import org.apache.catalina.Context;
-import org.apache.catalina.Globals;
-import org.apache.catalina.LifecycleException;
-import org.apache.catalina.LifecycleState;
-import org.apache.catalina.Wrapper;
+import org.apache.catalina.*;
 import org.apache.catalina.security.SecurityUtil;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
@@ -61,6 +26,15 @@ import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.log.SystemLogHandler;
 import org.apache.tomcat.util.modeler.Registry;
 import org.apache.tomcat.util.modeler.Util;
+
+import javax.management.*;
+import javax.servlet.*;
+import javax.servlet.annotation.MultipartConfig;
+import java.io.PrintStream;
+import java.lang.reflect.Method;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Standard implementation of the <b>Wrapper</b> interface that represents an individual servlet definition. No child
@@ -74,7 +48,7 @@ public class StandardWrapper extends ContainerBase implements ServletConfig, Wra
 
     private final Log log = LogFactory.getLog(StandardWrapper.class); // must not be static
 
-    protected static final String[] DEFAULT_SERVLET_METHODS = new String[] { "GET", "HEAD", "POST" };
+    protected static final String[] DEFAULT_SERVLET_METHODS = new String[]{"GET", "HEAD", "POST"};
 
     // ----------------------------------------------------------- Constructors
 
@@ -263,7 +237,7 @@ public class StandardWrapper extends ContainerBase implements ServletConfig, Wra
     /**
      * Static class array used when the SecurityManager is turned on and <code>Servlet.init</code> is invoked.
      */
-    protected static Class<?>[] classType = new Class[] { ServletConfig.class };
+    protected static Class<?>[] classType = new Class[]{ServletConfig.class};
 
     private final ReentrantReadWriteLock parametersLock = new ReentrantReadWriteLock();
 
@@ -318,7 +292,7 @@ public class StandardWrapper extends ContainerBase implements ServletConfig, Wra
 
     /**
      * @return the number of active allocations of this servlet, even if they are all for the same instance (as will be
-     *             true for servlets that do not implement <code>SingleThreadModel</code>.
+     * true for servlets that do not implement <code>SingleThreadModel</code>.
      */
     public int getCountAllocated() {
         return this.countAllocated.get();
@@ -354,7 +328,7 @@ public class StandardWrapper extends ContainerBase implements ServletConfig, Wra
         int oldLoadOnStartup = this.loadOnStartup;
         this.loadOnStartup = value;
         support.firePropertyChange("loadOnStartup", Integer.valueOf(oldLoadOnStartup),
-                Integer.valueOf(this.loadOnStartup));
+            Integer.valueOf(this.loadOnStartup));
 
     }
 
@@ -385,7 +359,6 @@ public class StandardWrapper extends ContainerBase implements ServletConfig, Wra
 
     /**
      * @return maximum number of instances that will be allocated when a single thread model servlet is used.
-     *
      * @deprecated This will be removed in Tomcat 10.1 onwards.
      */
     @Deprecated
@@ -398,7 +371,6 @@ public class StandardWrapper extends ContainerBase implements ServletConfig, Wra
      * Set the maximum number of instances that will be allocated when a single thread model servlet is used.
      *
      * @param maxInstances New value of maxInstances
-     *
      * @deprecated This will be removed in Tomcat 10.1 onwards.
      */
     @Deprecated
@@ -500,8 +472,7 @@ public class StandardWrapper extends ContainerBase implements ServletConfig, Wra
      * that may cause the application to behave unexpectedly.
      *
      * @return {@code null} if the class has not been loaded, otherwise {@code
-     *         true} if the servlet does implement {@code SingleThreadModel} and {@code false} if it does not.
-     *
+     * true} if the servlet does implement {@code SingleThreadModel} and {@code false} if it does not.
      * @deprecated This will be removed in Tomcat 10.1 onwards.
      */
     @Deprecated
@@ -619,7 +590,6 @@ public class StandardWrapper extends ContainerBase implements ServletConfig, Wra
      * Extract the root cause from a servlet exception.
      *
      * @param e The servlet exception
-     *
      * @return the root cause of the Servlet exception
      */
     public static Throwable getRootCause(ServletException e) {
@@ -719,8 +689,8 @@ public class StandardWrapper extends ContainerBase implements ServletConfig, Wra
      * must ensure that this instance is not allocated again until it is deallocated by a call to
      * <code>deallocate()</code>.
      *
-     * @exception ServletException if the servlet init() method threw an exception
-     * @exception ServletException if a loading error occurs
+     * @throws ServletException if the servlet init() method threw an exception
+     * @throws ServletException if a loading error occurs
      */
     @Override
     public Servlet allocate() throws ServletException {
@@ -823,8 +793,7 @@ public class StandardWrapper extends ContainerBase implements ServletConfig, Wra
      * implement SingleThreadModel, no action is actually required.
      *
      * @param servlet The servlet to be returned
-     *
-     * @exception ServletException if a deallocation error occurs
+     * @throws ServletException if a deallocation error occurs
      */
     @Override
     public void deallocate(Servlet servlet) throws ServletException {
@@ -953,8 +922,8 @@ public class StandardWrapper extends ContainerBase implements ServletConfig, Wra
      * the current web application. This gives such classes access to Catalina internals, which are prevented for
      * classes loaded for web applications.
      *
-     * @exception ServletException if the servlet init() method threw an exception
-     * @exception ServletException if some other loading problem occurs
+     * @throws ServletException if the servlet init() method threw an exception
+     * @throws ServletException if some other loading problem occurs
      */
     @Override
     public synchronized void load() throws ServletException {
@@ -992,7 +961,6 @@ public class StandardWrapper extends ContainerBase implements ServletConfig, Wra
      * startup time.
      *
      * @return the loaded Servlet instance
-     *
      * @throws ServletException for a Servlet load error
      */
     public synchronized Servlet loadServlet() throws ServletException {
@@ -1102,7 +1070,7 @@ public class StandardWrapper extends ContainerBase implements ServletConfig, Wra
             if (Globals.IS_SECURITY_ENABLED) {
                 boolean success = false;
                 try {
-                    Object[] args = new Object[] { facade };
+                    Object[] args = new Object[]{facade};
                     SecurityUtil.doAsPrivilege("init", servlet, classType, args);
                     success = true;
                 } finally {
@@ -1195,7 +1163,7 @@ public class StandardWrapper extends ContainerBase implements ServletConfig, Wra
      * Process an UnavailableException, marking this servlet as unavailable for the specified amount of time.
      *
      * @param unavailable The exception that occurred, or <code>null</code> to mark this servlet as permanently
-     *                        unavailable
+     *                    unavailable
      */
     @Override
     public void unavailable(UnavailableException unavailable) {
@@ -1220,7 +1188,7 @@ public class StandardWrapper extends ContainerBase implements ServletConfig, Wra
      * instance. This can be used, for example, prior to shutting down the entire servlet engine, or prior to reloading
      * all of the classes from the Loader associated with our Loader's repository.
      *
-     * @exception ServletException if an exception is thrown by the destroy() method
+     * @throws ServletException if an exception is thrown by the destroy() method
      */
     @Override
     public synchronized void unload() throws ServletException {
@@ -1351,9 +1319,8 @@ public class StandardWrapper extends ContainerBase implements ServletConfig, Wra
 
 
     /**
-     * @return the initialization parameter value for the specified name, if any; otherwise return <code>null</code>.
-     *
      * @param name Name of the initialization parameter to retrieve
+     * @return the initialization parameter value for the specified name, if any; otherwise return <code>null</code>.
      */
     @Override
     public String getInitParameter(String name) {
@@ -1363,7 +1330,7 @@ public class StandardWrapper extends ContainerBase implements ServletConfig, Wra
 
     /**
      * @return the set of initialization parameter names defined for this servlet. If none are defined, an empty
-     *             Enumeration is returned.
+     * Enumeration is returned.
      */
     @Override
     public Enumeration<String> getInitParameterNames() {
@@ -1474,11 +1441,9 @@ public class StandardWrapper extends ContainerBase implements ServletConfig, Wra
 
 
     /**
-     * @return <code>true</code> if the specified class name represents a container provided servlet class that should
-     *             be loaded by the server class loader.
-     *
      * @param classname Name of the class to be checked
-     *
+     * @return <code>true</code> if the specified class name represents a container provided servlet class that should
+     * be loaded by the server class loader.
      * @deprecated Unused. Will be removed in Tomcat 9
      */
     @Deprecated
@@ -1530,8 +1495,8 @@ public class StandardWrapper extends ContainerBase implements ServletConfig, Wra
      * Start this component and implement the requirements of
      * {@link org.apache.catalina.util.LifecycleBase#startInternal()}.
      *
-     * @exception LifecycleException if this component detects a fatal error that prevents this component from being
-     *                                   used
+     * @throws LifecycleException if this component detects a fatal error that prevents this component from being
+     *                            used
      */
     @Override
     protected synchronized void startInternal() throws LifecycleException {
@@ -1560,8 +1525,8 @@ public class StandardWrapper extends ContainerBase implements ServletConfig, Wra
      * Stop this component and implement the requirements of
      * {@link org.apache.catalina.util.LifecycleBase#stopInternal()}.
      *
-     * @exception LifecycleException if this component detects a fatal error that prevents this component from being
-     *                                   used
+     * @throws LifecycleException if this component detects a fatal error that prevents this component from being
+     *                            used
      */
     @Override
     protected synchronized void stopInternal() throws LifecycleException {
@@ -1666,11 +1631,11 @@ public class StandardWrapper extends ContainerBase implements ServletConfig, Wra
      * Remove a JMX notificationListener
      *
      * @see javax.management.NotificationEmitter#removeNotificationListener(javax.management.NotificationListener,
-     *          javax.management.NotificationFilter, java.lang.Object)
+     * javax.management.NotificationFilter, java.lang.Object)
      */
     @Override
     public void removeNotificationListener(NotificationListener listener, NotificationFilter filter, Object object)
-            throws ListenerNotFoundException {
+        throws ListenerNotFoundException {
         broadcaster.removeNotificationListener(listener, filter, object);
     }
 
@@ -1686,19 +1651,19 @@ public class StandardWrapper extends ContainerBase implements ServletConfig, Wra
         // FIXME: we not send j2ee.state.failed
         // FIXME: we not send j2ee.attribute.changed
         if (notificationInfo == null) {
-            notificationInfo = new MBeanNotificationInfo[] {
-                    new MBeanNotificationInfo(new String[] { "j2ee.object.created" }, Notification.class.getName(),
-                            "servlet is created"),
-                    new MBeanNotificationInfo(new String[] { "j2ee.state.starting" }, Notification.class.getName(),
-                            "servlet is starting"),
-                    new MBeanNotificationInfo(new String[] { "j2ee.state.running" }, Notification.class.getName(),
-                            "servlet is running"),
-                    new MBeanNotificationInfo(new String[] { "j2ee.state.stopped" }, Notification.class.getName(),
-                            "servlet start to stopped"),
-                    new MBeanNotificationInfo(new String[] { "j2ee.object.stopped" }, Notification.class.getName(),
-                            "servlet is stopped"),
-                    new MBeanNotificationInfo(new String[] { "j2ee.object.deleted" }, Notification.class.getName(),
-                            "servlet is deleted") };
+            notificationInfo = new MBeanNotificationInfo[]{
+                new MBeanNotificationInfo(new String[]{"j2ee.object.created"}, Notification.class.getName(),
+                    "servlet is created"),
+                new MBeanNotificationInfo(new String[]{"j2ee.state.starting"}, Notification.class.getName(),
+                    "servlet is starting"),
+                new MBeanNotificationInfo(new String[]{"j2ee.state.running"}, Notification.class.getName(),
+                    "servlet is running"),
+                new MBeanNotificationInfo(new String[]{"j2ee.state.stopped"}, Notification.class.getName(),
+                    "servlet start to stopped"),
+                new MBeanNotificationInfo(new String[]{"j2ee.object.stopped"}, Notification.class.getName(),
+                    "servlet is stopped"),
+                new MBeanNotificationInfo(new String[]{"j2ee.object.deleted"}, Notification.class.getName(),
+                    "servlet is deleted")};
         }
         return notificationInfo;
     }
@@ -1708,11 +1673,11 @@ public class StandardWrapper extends ContainerBase implements ServletConfig, Wra
      * Add a JMX-NotificationListener
      *
      * @see javax.management.NotificationBroadcaster#addNotificationListener(javax.management.NotificationListener,
-     *          javax.management.NotificationFilter, java.lang.Object)
+     * javax.management.NotificationFilter, java.lang.Object)
      */
     @Override
     public void addNotificationListener(NotificationListener listener, NotificationFilter filter, Object object)
-            throws IllegalArgumentException {
+        throws IllegalArgumentException {
         broadcaster.addNotificationListener(listener, filter, object);
     }
 

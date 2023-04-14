@@ -335,11 +335,13 @@ public class CoyoteAdapter implements Adapter {
         try {
             // Parse and set Catalina and configuration specific
             // request parameters
+            // 关键，处理负责响应请求的组件关系
             postParseSuccess = postParseRequest(req, request, res, response);
             if (postParseSuccess) {
                 // check valves if we support async
                 request.setAsyncSupported(connector.getService().getContainer().getPipeline().isAsyncSupported());
                 // Calling the container
+                // 处理链路请求
                 connector.getService().getContainer().getPipeline().getFirst().invoke(request, response);
             }
             if (request.isAsync()) {
@@ -686,6 +688,7 @@ public class CoyoteAdapter implements Adapter {
 
         while (mapRequired) {
             // This will map the the latest version by default
+            // 这里很关键，根据url确定最终负责响应的Host、Context和 Wrapper，并将这些信息存放在 request.getMappingData 中
             connector.getService().getMapper().map(serverName, decodedURI, version, request.getMappingData());
 
             // If there is no context at this point, either this is a 404
