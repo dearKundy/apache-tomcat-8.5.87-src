@@ -16,12 +16,12 @@
  */
 package org.apache.catalina.core;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
-
 import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.RequestFacade;
 import org.apache.catalina.mapper.MappingData;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
 
 public class ApplicationMapping {
 
@@ -59,13 +59,13 @@ public class ApplicationMapping {
                             break;
                         case EXACT:
                             mapping = new ApplicationMappingImpl(mappingData.wrapperPath.toString().substring(1),
-                                    mappingData.wrapperPath.toString(), mappingData.matchType, servletName);
+                                mappingData.wrapperPath.toString(), mappingData.matchType, servletName);
                             break;
                         case EXTENSION:
                             String path = mappingData.wrapperPath.toString();
                             int extIndex = path.lastIndexOf('.');
                             mapping = new ApplicationMappingImpl(path.substring(1, extIndex),
-                                    "*" + path.substring(extIndex), mappingData.matchType, servletName);
+                                "*" + path.substring(extIndex), mappingData.matchType, servletName);
                             break;
                         case PATH:
                             String matchValue;
@@ -75,7 +75,9 @@ public class ApplicationMapping {
                                 matchValue = mappingData.pathInfo.toString().substring(1);
                             }
                             mapping = new ApplicationMappingImpl(matchValue, mappingData.wrapperPath.toString() + "/*",
-                                    mappingData.matchType, servletName);
+                                mappingData.matchType, servletName);
+                            break;
+                        default:
                             break;
                     }
                 }

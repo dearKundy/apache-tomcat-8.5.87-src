@@ -383,6 +383,9 @@ public class WebXml extends XmlEncodingBase implements DocumentProperties.Encodi
     // TODO: security-role-ref/description (multiple with language) is ignored
     private final Map<String, ServletDef> servlets = new HashMap<>();
 
+    /**
+     * 添加servlet
+     */
     public void addServlet(ServletDef servletDef) {
         servlets.put(servletDef.getServletName(), servletDef);
         if (overridable) {

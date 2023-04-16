@@ -98,3 +98,26 @@ Pipeline只有一个实现类StandardPipeline。
 参考文章：
 - [Tomcat调优及acceptCount、maxConnections与maxThreads参数的含义和关系](https://blog.csdn.net/z69183787/article/details/128817991)
 
+# 如何确定某个请求由哪个 Servlet 负责响应？
+> 我们使用逆推的方式，看源码大部分情况下都是逆推。 根据我们的基础知识，我们知道最终决定由哪一个 Wrapper 处理我们的请求是在 Request 的 MappingData 对象的 wrapper 字段中的。 所以我们就得看沿着MappingData的wrapper属性逆向网上找，从而确定整个链路。
+
+1. mappingData.wrapper = wrapper.object;：org/apache/catalina/mapper/Mapper.java:1004
+2. wrapper从哪来：MappedWrapper wrapper = exactFind(wrappers, path);【org.apache.catalina.mapper.Mapper.MappedWrapper】
+    1. 这里是根据path和MappedWrapper对象中的name属性进行匹配的。
+3. wrappers从哪来：MappedWrapper[] exactWrappers = contextVersion.exactWrappers;【org/apache/catalina/mapper/Mapper.java:837】
+4. contextVersion.exactWrappers从哪来：context.exactWrappers = newWrappers;【org/apache/catalina/mapper/Mapper.java:484】
+5. newWrappers是一个数组，里面的元素是怎么构造的：MappedWrapper newWrapper = new MappedWrapper(name, wrapper, jspWildCard, resourceOnly);【org/apache/catalina/mapper/Mapper.java:480】
+    1. 在第2步中MappedWrapper对象中的name属性就是在这一步设置进去的。
+6. name和wrapper怎么来：
+    - wrapper：addWrapper(contextVersion, wrapper.getMapping(), wrapper.getWrapper(), wrapper.isJspWildCard(),wrapper.isResourceOnly());的wrapper.getWrapper()【org/apache/catalina/mapper/Mapper.java:425】
+    - name：addWrapper(contextVersion, wrapper.getMapping(), wrapper.getWrapper(), wrapper.isJspWildCard(),wrapper.isResourceOnly());的wrapper.getMapping()【org/apache/catalina/mapper/Mapper.java:425】
+7. wrappers 从哪来：
+    1. addWrappers(newContextVersion, wrappers);【org/apache/catalina/mapper/Mapper.java:277】
+    2. prepareWrapperMappingInfo(context, (Wrapper) container, wrappers);【org/apache/catalina/mapper/MapperListener.java:377】
+    3. prepareWrapperMappingInfo做了什么：wrappers.add(new WrapperMappingInfo(mapping, wrapper, jspWildCard, resourceOnly));
+        - wrapper从哪来：wrapper其实就是context的小孩
+        - mapping从哪来：String[] mappings = wrapper.findMappings();【org/apache/catalina/mapper/MapperListener.java:449】
+            1. wrapper的mappings的元素在哪里保存：mappings.add(mapping);【org/apache/catalina/core/StandardWrapper.java:654】
+            2. mapping如何构造：addServletMappingDecoded(String pattern, String name, boolean jspWildCard) 的pattern【org/apache/catalina/core/StandardContext.java:3012】
+            3. pattern怎么来：org/apache/catalina/core/StandardContext.java:3006 -> org/apache/catalina/startup/ContextConfig.java:1289 -> org/apache/catalina/core/StandardContext.java:3006 -> org/apache/catalina/startup/ContextConfig.java:1287 -> 【注意：org/apache/catalina/core/StandardContext.java:3030 这一行保存了urlPattern对应的servletName的关系】
+            4. webxml.getServletMappings元素如何构建：【org/apache/tomcat/util/descriptor/web/WebXml.java:1804】，再往上就不找了，实质上解析 web.xml 中的 servlet-mapping，pattern就是url-pattern，servlet-name就是servlet-name，url-pattern与servlet-name是多对一。

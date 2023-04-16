@@ -1284,8 +1284,7 @@ public class ContextConfig implements LifecycleListener {
             // 最终确定 context与 wrapper的关联关系
             context.addChild(wrapper);
         }
-        for (Entry<String, String> entry :
-            webxml.getServletMappings().entrySet()) {
+        for (Entry<String, String> entry : webxml.getServletMappings().entrySet()) {
             context.addServletMappingDecoded(entry.getKey(), entry.getValue());
         }
         SessionConfig sessionConfig = webxml.getSessionConfig();
