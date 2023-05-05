@@ -309,6 +309,7 @@ public class CoyoteAdapter implements Adapter {
             request = connector.createRequest();
             request.setCoyoteRequest(req);
             response = connector.createResponse();
+            // 在这里 （connector/Response）和 （coyote/Response）产生关联
             response.setCoyoteResponse(res);
 
             // Link objects
@@ -371,6 +372,7 @@ public class CoyoteAdapter implements Adapter {
                 }
             } else {
                 request.finishRequest();
+                // 处理响应流
                 response.finishResponse();
             }
 

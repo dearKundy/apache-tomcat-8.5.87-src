@@ -588,6 +588,7 @@ public abstract class SocketWrapperBase<E> {
     protected void writeBlocking(ByteBuffer from) throws IOException {
         if (from.hasRemaining()) {
             socketBufferHandler.configureWriteBufferForWrite();
+            // 将源 buffer 转换成 SocketBufferHandler 的 writeBuffer
             transfer(from, socketBufferHandler.getWriteBuffer());
             while (from.hasRemaining()) {
                 doWrite(true);

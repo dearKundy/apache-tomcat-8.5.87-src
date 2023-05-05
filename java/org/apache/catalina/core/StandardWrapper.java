@@ -1029,6 +1029,7 @@ public class StandardWrapper extends ContainerBase implements ServletConfig, Wra
                 singleThreadModel = true;
             }
 
+            // 在这里会调用 servlet 的 init 方法
             initServlet(servlet);
 
             fireContainerEvent("load", this);

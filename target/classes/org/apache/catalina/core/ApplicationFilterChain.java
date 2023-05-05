@@ -209,6 +209,7 @@ public final class ApplicationFilterChain implements FilterChain {
                 Object[] args = new Object[] { req, res };
                 SecurityUtil.doAsPrivilege("service", servlet, classTypeUsedInService, args, principal);
             } else {
+                // service
                 servlet.service(request, response);
             }
         } catch (IOException | ServletException | RuntimeException e) {

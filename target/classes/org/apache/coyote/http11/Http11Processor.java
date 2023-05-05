@@ -168,6 +168,7 @@ public class Http11Processor extends AbstractProcessor {
                 protocol.getRejectIllegalHeader(), httpParser);
         request.setInputBuffer(inputBuffer);
 
+        // 在这里设置coyote/response的outputBuffer，OutputBuffer 只是一个接口，Http11OutputBuffer是它的实现类
         outputBuffer = new Http11OutputBuffer(response, protocol.getMaxHttpResponseHeaderSize(),
                 protocol.getSendReasonPhrase());
         response.setOutputBuffer(outputBuffer);
@@ -593,6 +594,8 @@ public class Http11Processor extends AbstractProcessor {
             if (getErrorState().isIoAllowed()) {
                 try {
                     rp.setStage(org.apache.coyote.Constants.STAGE_SERVICE);
+
+                    // 【service】
                     getAdapter().service(request, response);
                     // Handle when the response was committed before a serious
                     // error occurred. Throwing a ServletException should both
@@ -694,6 +697,7 @@ public class Http11Processor extends AbstractProcessor {
     @Override
     protected final void setSocketWrapper(SocketWrapperBase<?> socketWrapper) {
         super.setSocketWrapper(socketWrapper);
+        // Http11InputBuffer 中有一个  SocketWrapperBase 字段用来存放 socketWrapper
         inputBuffer.init(socketWrapper);
         outputBuffer.init(socketWrapper);
     }

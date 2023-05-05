@@ -75,7 +75,7 @@ Pipeline只有一个实现类StandardPipeline。
 
 > 执行EnginePipeline -> HostPipeline -> ContextPipeline -> WrapperPipeline
 >
-用EnginePipeline详细说明：获取到frist valve，然后沿着valve的next链式执行，最终执行到 StandardEngineValve，在 StandardEngineValve 的invoke方法中会指定一下个容器Host的pipeLine。
+用EnginePipeline详细说明：获取到first valve，然后沿着valve的next链式执行，最终执行到 StandardEngineValve，在 StandardEngineValve 的invoke方法中会指定一下个容器Host的pipeLine。
 
 
 参考文章：
@@ -93,7 +93,7 @@ Pipeline只有一个实现类StandardPipeline。
     - `作用`：线程池（实际处理网络数据逻辑的线程池）的 maximumPoolSize 参数。
 - `maxConnections`
   - `使用位置`：org/apache/tomcat/util/net/Acceptor.java:117
-  - `作用`：Acceptor能同时接受的最大连接数。当当前socket连接超过maxConnections的时候，Acceptor线程自己会阻塞等待，等连接降下去之后，才去处理Accept队列的下一个连接
+  - `作用`：Acceptor能同时接受的最大连接数。当前socket连接超过maxConnections的时候，Acceptor线程自己会阻塞等待，等连接降下去之后，才去处理Accept队列的下一个连接
 
 参考文章：
 - [Tomcat调优及acceptCount、maxConnections与maxThreads参数的含义和关系](https://blog.csdn.net/z69183787/article/details/128817991)
@@ -121,3 +121,59 @@ Pipeline只有一个实现类StandardPipeline。
             2. mapping如何构造：addServletMappingDecoded(String pattern, String name, boolean jspWildCard) 的pattern【org/apache/catalina/core/StandardContext.java:3012】
             3. pattern怎么来：org/apache/catalina/core/StandardContext.java:3006 -> org/apache/catalina/startup/ContextConfig.java:1289 -> org/apache/catalina/core/StandardContext.java:3006 -> org/apache/catalina/startup/ContextConfig.java:1287 -> 【注意：org/apache/catalina/core/StandardContext.java:3030 这一行保存了urlPattern对应的servletName的关系】
             4. webxml.getServletMappings元素如何构建：【org/apache/tomcat/util/descriptor/web/WebXml.java:1804】，再往上就不找了，实质上解析 web.xml 中的 servlet-mapping，pattern就是url-pattern，servlet-name就是servlet-name，url-pattern与servlet-name是多对一。
+
+# 负责接收HTTP请求信息的 Request 对象是复用的吗？
+> 根据源码，我们可以很容易定位到 Request 是出自于 Processor，而 Processor 就是 org.apache.tomcat.util.net.SocketWrapperBase.currentProcessor。
+
+所以我们重点分析 org.apache.tomcat.util.net.SocketWrapperBase.currentProcessor 设置情况。【org/apache/coyote/AbstractProtocol.java:854】
+这里重点两个方向，SocketWrapperBase 是复用的吗？currentProcessor是复用的吗？
+
+## SocketWrapperBase 是复用的吗？
+SocketProcessorBase 是将 SocketWrapperBase 再包一层，核心字段都在 SocketWrapperBase 中存放。
+
+在 sc = createSocketProcessor(socketWrapper, event);【org/apache/tomcat/util/net/AbstractEndpoint.java:1239】中可以看到，每次请求 SocketProcessorBase 都是新的对象，但是 SocketWrapperBase 是传进来的，
+我们再看看 SocketWrapperBase 的创建情况。
+
+我们一路往上 trace，看到 NioSocketWrapper socketWrapper = (NioSocketWrapper) sk.attachment(); 【org/apache/tomcat/util/net/NioEndpoint.java:756】
+可以看到 SocketWrapperBase 从 SelectionKey 的 attachment 中取出，我们再来 trace attachment【attachment是SocketWrapperBase的子类】。
+
+SelectionKey 的 attachment 在 sc.register(getSelector(), SelectionKey.OP_READ, socketWrapper);【org/apache/tomcat/util/net/NioEndpoint.java:627】设置，这个代码其实就是在接受到注册事件之后，
+再注册一个 OP_READ 事件，下次循环处理的时候就按照 REDA 逻辑处理。
+
+上面的 socketWrapper 又是怎么来的呢？socketWrapper 是从 PollerEvent 中取出来的，在接受到请求的时候会将 socketWrapper 包装在 PollerEvent 对象中
+然后将 PollerEvent 塞到 events 中。 poller.register(socketWrapper);【org/apache/tomcat/util/net/NioEndpoint.java:419】
+
+
+# Servlet 的 response 是如何返回给客户端的
+我们得先知道两个基础知识
+1. servlet中是如何进行响应的：`resp.getWriter().println("hello");`，resp是 ServletResponse 接口的实现类，具体的实现类是 ResponseFacade。
+2. websocket编程中是如何进行响应的：通过Socket的getOutputStream，然后在 OutputStream 中write出去。
+所以我们要确定的就是 ResponseFacade 是如何跟 Socket的ResponseFacade关联的。
+
+- ResponseFacade 的 response （connector/Response）是怎么来的，filterChain.doFilter(request.getRequest(), response.getResponse());【org/apache/catalina/core/StandardWrapperValve.java:155】
+    - response.getResponse()方法中，会返回一个 ResponseFacade，其中（connector/Response）就是 this对象，因此 ResponseFacade与（connector/Response）关系绑定。
+- 接下来只需要专心trace （connector/Response）的getWriter()，而的getWriter中最关键的就是outputBuffer字段。
+- 一直往上trace，发现 response.setCoyoteResponse(res);【org/apache/catalina/connector/CoyoteAdapter.java:312】
+  - 这里将 coyoteResponse 设置到 （connector/Response）的outputBuffer 字段中（关键）【所以 connector/response 的 outputResponse 就是 coyote/response】
+  - 那么开始 trace coyoteResponse
+    - coyoteResponse 是存储在 AbstractProcessor 中的【org/apache/coyote/AbstractProcessor.java:66】，在 【org/apache/coyote/http11/Http11Processor.java:174】位置为初始化 coyoteResponse的 outputBuffer（Http11OutputBuffer）。
+    - 在【org/apache/coyote/http11/Http11Processor.java:702】会绑定coyoteResponse的 outputBuffer的socketWrapper。
+
+额，实际上`resp.getWriter().println("hello");`只是把数据写入到 coyoteResponse的 outputBuffer 中，想要实现响应还是的靠 org.apache.catalina.connector.OutputBuffer类将缓冲区的数据写入到Socket连接中发送给客户端。
+
+org/apache/tomcat/util/net/NioEndpoint.java:1336
+
+
+机缘巧合之下（不会真的有人信吧，其实我是基于 socketWrapper进行trace），我发现了最终是在 org/apache/tomcat/util/net/NioEndpoint.java:1336 拿到 socket 并向客户端写出响应的。
+
+
+## Servlet注解如何实现的？
+## websocket如何实现的？
+## 为什么tomcat能够加载到 webapps 下的 class 文件
+
+
+connector/Response 的 writer【CoyoteWriter】 或者 outputBuffer 是什么时候设值的
+
+org/apache/coyote/AbstractProcessor.java:79
+
+一直到这 org/apache/catalina/connector/CoyoteAdapter.java:305 都还是 connector/response
