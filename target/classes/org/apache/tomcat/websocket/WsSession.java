@@ -744,8 +744,11 @@ public class WsSession implements Session {
                 }
                 if (state == State.OPEN) {
                     state = State.OUTPUT_CLOSED;
+                    // 发啥消息？用wireshark看看
                     sendCloseMessage(closeReason);
+                    System.out.println("sendCloseMessage");
                     fireEndpointOnClose(closeReason);
+                    System.out.println("fireEndpointOnClose");
                 }
                 state = State.CLOSED;
 
@@ -812,11 +815,13 @@ public class WsSession implements Session {
             // PROTOCOL_ERROR is probably better than GOING_AWAY here
             msg.putShort((short) CloseCodes.PROTOCOL_ERROR.getCode());
         } else {
+            // WebSocket Connection Close 报文标识（应用层/WS协议层）
             msg.putShort((short) closeCode.getCode());
         }
 
         String reason = closeReason.getReasonPhrase();
         if (reason != null && reason.length() > 0) {
+            // 关闭原因
             appendCloseReasonWithTruncation(msg, reason);
         }
         msg.flip();
@@ -829,6 +834,7 @@ public class WsSession implements Session {
                 log.debug(sm.getString("wsSession.sendCloseFail", id), e);
             }
             wsRemoteEndpoint.close();
+            System.out.println("wsRemoteEndpoint.close...");
             // Failure to send a close message is not unexpected in the case of
             // an abnormal closure (usually triggered by a failure to read/write
             // from/to the client. In this case do not trigger the endpoint's

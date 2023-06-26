@@ -189,6 +189,7 @@ public class WsFrameServer extends WsFrameBase {
                 if (!changeReadState(ReadState.PROCESSING, ReadState.WAITING)) {
                     continue;
                 }
+                log.info("SocketState.UPGRADED, position doOnDataAvailable");
                 return SocketState.UPGRADED;
             case SUSPENDING_PROCESS:
                 if (!changeReadState(ReadState.SUSPENDING_PROCESS, ReadState.SUSPENDED)) {

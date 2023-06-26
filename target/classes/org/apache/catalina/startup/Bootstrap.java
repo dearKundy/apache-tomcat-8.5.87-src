@@ -254,7 +254,7 @@ public final class Bootstrap {
      */
     public void init() throws Exception {
 
-        // 初始化common、server、shared三个类加载器
+        // 初始化common、server、shared三个类加载器【每个加载器负责加载不同的类】
         initClassLoaders();
 
         // 将当前线程上下文类加载器设置为catalinaLoader

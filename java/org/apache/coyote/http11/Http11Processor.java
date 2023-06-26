@@ -470,6 +470,7 @@ public class Http11Processor extends AbstractProcessor {
             try {
                 if (!inputBuffer.parseRequestLine(keptAlive)) {
                     if (inputBuffer.getParsingRequestLinePhase() == -1) {
+                        log.info("SocketState.UPGRADING, position 1");
                         return SocketState.UPGRADING;
                     } else if (handleIncompleteRequestLineRead()) {
                         break;
@@ -529,6 +530,7 @@ public class Http11Processor extends AbstractProcessor {
                 setErrorState(ErrorState.CLOSE_CLEAN, t);
             }
 
+            // websocket 握手请求
             // Has an upgrade been requested?
             if (isConnectionToken(request.getMimeHeaders(), "upgrade")) {
                 // Check the protocol
@@ -554,6 +556,7 @@ public class Http11Processor extends AbstractProcessor {
                             response.setStatus(HttpServletResponse.SC_SWITCHING_PROTOCOLS);
                             response.setHeader("Connection", "Upgrade");
                             response.setHeader("Upgrade", requestedProtocol);
+                            // 写响应
                             action(ActionCode.CLOSE, null);
                             getAdapter().log(request, response, 0);
 
@@ -562,6 +565,7 @@ public class Http11Processor extends AbstractProcessor {
                                     .getInternalUpgradeHandler(getAdapter(), upgradeRequest);
                             UpgradeToken upgradeToken = new UpgradeToken(upgradeHandler, null, null, requestedProtocol);
                             action(ActionCode.UPGRADE, upgradeToken);
+                            log.info("SocketState.UPGRADING, position 2");
                             return SocketState.UPGRADING;
                         }
                     }
@@ -597,6 +601,7 @@ public class Http11Processor extends AbstractProcessor {
 
                     // 【service】
                     getAdapter().service(request, response);
+                    System.out.println("getAdapter().service(request, response)");
                     // Handle when the response was committed before a serious
                     // error occurred. Throwing a ServletException should both
                     // set the status to 500 and set the errorException.
@@ -675,6 +680,7 @@ public class Http11Processor extends AbstractProcessor {
         } else if (isAsync()) {
             return SocketState.LONG;
         } else if (isUpgrade()) {
+            log.info("SocketState.UPGRADING, position 3");
             return SocketState.UPGRADING;
         } else {
             if (sendfileState == SendfileState.PENDING) {

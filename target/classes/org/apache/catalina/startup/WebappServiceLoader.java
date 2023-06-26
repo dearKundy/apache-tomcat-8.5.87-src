@@ -160,6 +160,8 @@ public class WebappServiceLoader<T> {
                 // Only process the service configuration file if it is not a
                 // Container level file that has already been processed
                 if (!containerServiceConfigFiles.contains(serviceConfigFile)) {
+                    // 将指定目录中的javax.servlet.ServletContainerInitializer文件中声明的类添加到applicationServiceClassNames中
+                    // 如果是含有tomcat-websocket依赖，就会扫描到 org.apache.tomcat.websocket.server.WsSci
                     parseConfigFile(applicationServiceClassNames, serviceConfigFile);
                 }
             }

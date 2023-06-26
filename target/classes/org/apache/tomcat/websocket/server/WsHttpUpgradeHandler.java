@@ -133,6 +133,7 @@ public class WsHttpUpgradeHandler implements InternalHttpUpgradeHandler {
             // WsFrame adds the necessary final transformations. Copy the
             // completed transformation chain to the remote end point.
             wsRemoteEndpointServer.setTransformation(wsFrame.getTransformation());
+            // onOpen
             ep.onOpen(wsSession, serverEndpointConfig);
             webSocketContainer.registerSession(serverEndpointConfig.getPath(), wsSession);
         } catch (DeploymentException e) {
@@ -192,6 +193,7 @@ public class WsHttpUpgradeHandler implements InternalHttpUpgradeHandler {
 
         }
         if (wsFrame.isOpen()) {
+            log.info("SocketState.UPGRADED, position upgradeDispatch");
             return SocketState.UPGRADED;
         } else {
             return SocketState.CLOSED;

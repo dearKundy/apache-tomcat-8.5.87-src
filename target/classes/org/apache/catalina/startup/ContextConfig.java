@@ -1091,9 +1091,7 @@ public class ContextConfig implements LifecycleListener {
         // Step 11. Apply the ServletContainerInitializer config to the
         // context
         if (ok) {
-            for (Map.Entry<ServletContainerInitializer,
-                Set<Class<?>>> entry :
-                initializerClassMap.entrySet()) {
+            for (Map.Entry<ServletContainerInitializer, Set<Class<?>>> entry : initializerClassMap.entrySet()) {
                 if (entry.getValue().isEmpty()) {
                     context.addServletContainerInitializer(
                         entry.getKey(), null);
@@ -1554,6 +1552,7 @@ public class ContextConfig implements LifecycleListener {
 
             HandlesTypes ht;
             try {
+                // 获取处理类型
                 ht = sci.getClass().getAnnotation(HandlesTypes.class);
             } catch (Exception e) {
                 if (log.isDebugEnabled()) {
@@ -2307,6 +2306,7 @@ public class ContextConfig implements LifecycleListener {
         if (urlPatterns != null) {
             if (!fragment.getServletMappings().containsValue(servletName)) {
                 for (String urlPattern : urlPatterns) {
+                    // 绑定 url 与 servlet
                     fragment.addServletMapping(urlPattern, servletName);
                 }
             }

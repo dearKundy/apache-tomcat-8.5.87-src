@@ -124,6 +124,7 @@ public class UpgradeProcessorExternal extends UpgradeProcessorBase {
             }
             return SocketState.CLOSED;
         }
+        log.info("SocketState.UPGRADED, position dispatch");
         return SocketState.UPGRADED;
     }
 

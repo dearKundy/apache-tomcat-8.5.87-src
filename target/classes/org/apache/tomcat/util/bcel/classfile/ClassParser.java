@@ -16,21 +16,17 @@
  */
 package org.apache.tomcat.util.bcel.classfile;
 
-import java.io.BufferedInputStream;
-import java.io.DataInput;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import org.apache.tomcat.util.bcel.Const;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.apache.tomcat.util.bcel.Const;
 
 /**
  * Wrapper class that parses a given Java .class file. The method <a href ="#parse">parse</a> returns a
  * <a href ="JavaClass.html"> JavaClass</a> object on success. When an I/O error or an inconsistency occurs an
  * appropriate exception is propagated back to the caller.
- *
+ * <p>
  * The structure and the names comply, except for a few conveniences, exactly with the
  * <a href="http://docs.oracle.com/javase/specs/"> JVM specification 1.0</a>. See this paper for further details about
  * the structure of a bytecode file.
@@ -60,12 +56,14 @@ public final class ClassParser {
 
 
     /**
+     * 按照字节码的顺序逐个字符解析 class 文件
+     *
      * Parses the given Java class file and return an object that represents the contained data, i.e., constants, methods,
      * fields and commands. A <em>ClassFormatException</em> is raised, if the file is not a valid .class file. (This does
      * not include verification of the byte code as it is performed by the java interpreter).
      *
      * @return Class object representing the parsed class file
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException          if an I/O error occurs.
      * @throws ClassFormatException if a class is malformed or cannot be interpreted as a class file
      */
     public JavaClass parse() throws IOException, ClassFormatException {
@@ -91,14 +89,15 @@ public final class ClassParser {
 
         // Return the information we have gathered in a new object
         return new JavaClass(className, superclassName, accessFlags, constantPool, interfaceNames,
-                runtimeVisibleAnnotations, runtimeVisibleFieldOrMethodAnnotations);
+            runtimeVisibleAnnotations, runtimeVisibleFieldOrMethodAnnotations);
     }
 
 
     /**
      * Reads information about the attributes of the class.
+     *
      * @param fieldOrMethod false if processing a class
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException          if an I/O error occurs.
      * @throws ClassFormatException if a class is malformed or cannot be interpreted as a class file
      */
     private void readAttributes(boolean fieldOrMethod) throws IOException, ClassFormatException {
@@ -111,7 +110,7 @@ public final class ClassParser {
             // Get class name from constant pool via 'name_index' indirection
             name_index = dataInputStream.readUnsignedShort();
             c = (ConstantUtf8) constantPool.getConstant(name_index,
-                    Const.CONSTANT_Utf8);
+                Const.CONSTANT_Utf8);
             name = c.getBytes();
             // Length of data in bytes
             length = dataInputStream.readInt();
@@ -125,7 +124,7 @@ public final class ClassParser {
                 } else {
                     if (runtimeVisibleAnnotations != null) {
                         throw new ClassFormatException(
-                                "RuntimeVisibleAnnotations attribute is not allowed more than once in a class file");
+                            "RuntimeVisibleAnnotations attribute is not allowed more than once in a class file");
                     }
                     runtimeVisibleAnnotations = new Annotations(dataInputStream, constantPool);
                 }
@@ -140,7 +139,7 @@ public final class ClassParser {
     /**
      * Reads information about the class and its super class.
      *
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException          if an I/O error occurs.
      * @throws ClassFormatException if a class is malformed or cannot be interpreted as a class file
      */
     private void readClassInfo() throws IOException, ClassFormatException {
@@ -171,7 +170,7 @@ public final class ClassParser {
     /**
      * Reads constant pool entries.
      *
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException          if an I/O error occurs.
      * @throws ClassFormatException if a class is malformed or cannot be interpreted as a class file
      */
     private void readConstantPool() throws IOException, ClassFormatException {
@@ -182,7 +181,7 @@ public final class ClassParser {
     /**
      * Reads information about the fields of the class, i.e., its variables.
      *
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException          if an I/O error occurs.
      * @throws ClassFormatException if a class is malformed or cannot be interpreted as a class file
      */
     private void readFields() throws IOException, ClassFormatException {
@@ -201,7 +200,7 @@ public final class ClassParser {
     /**
      * Checks whether the header of the file is ok. Of course, this has to be the first action on successive file reads.
      *
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException          if an I/O error occurs.
      * @throws ClassFormatException if a class is malformed or cannot be interpreted as a class file
      */
     private void readID() throws IOException, ClassFormatException {
@@ -214,7 +213,7 @@ public final class ClassParser {
     /**
      * Reads information about the interfaces implemented by this class.
      *
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException          if an I/O error occurs.
      * @throws ClassFormatException if a class is malformed or cannot be interpreted as a class file
      */
     private void readInterfaces() throws IOException, ClassFormatException {
@@ -234,10 +233,11 @@ public final class ClassParser {
     /**
      * Reads information about the methods of the class.
      *
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException          if an I/O error occurs.
      * @throws ClassFormatException if a class is malformed or cannot be interpreted as a class file
      */
     private void readMethods() throws IOException, ClassFormatException {
+        // 从输入流中读取一个无符号的 16 位短整数，并将其作为 int 类型返回。
         final int methodsCount = dataInputStream.readUnsignedShort();
         for (int i = 0; i < methodsCount; i++) {
             // file.readUnsignedShort(); // Unused access flags
@@ -253,7 +253,7 @@ public final class ClassParser {
     /**
      * Reads major and minor version of compiler which created the file.
      *
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException          if an I/O error occurs.
      * @throws ClassFormatException if a class is malformed or cannot be interpreted as a class file
      */
     private void readVersion() throws IOException, ClassFormatException {

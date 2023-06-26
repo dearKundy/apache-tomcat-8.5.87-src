@@ -151,6 +151,16 @@
       <Host name="localhost"  appBase="webapps"
             unpackWARs="true" autoDeploy="true">
 
+        <Context path="" docBase="ROOT" debug="0">
+
+          <JarScanner scanClassPath="false" />
+
+          <WebSocket subprotocols="chat">
+            <Endpoint className="com.kundy.ChatEndpoint" />
+          </WebSocket>
+
+        </Context>
+
         <!-- SingleSignOn valve, share authentication between web applications
              Documentation at: /docs/config/valve.html -->
         <!--
