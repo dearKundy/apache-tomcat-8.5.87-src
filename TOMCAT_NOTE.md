@@ -2,10 +2,13 @@
 
 【never give up，撞墙了就换个思路】
 
+https://qiankunli.github.io/2019/11/26/tomcat_source.html
+
 # Tomcat 架构
 
 ## Tomcat顶层架构
 ![img_1.png](img_1.png)
+
 一个Tomcat中只有一个Server，一个Server可以包含多个Service，一个Service只有一个 Container（Engine），但是可以有多个Connectors。
 PS：Engine、Host、Context 都属于 Container，但它们三个是父子关系。
 
@@ -92,7 +95,7 @@ Pipeline只有一个实现类StandardPipeline。
     - `作用`：线程池（实际处理网络数据逻辑的线程池）的 corePoolSize 参数。
 - `maxThreads`
     - `使用位置`：org/apache/tomcat/util/net/AbstractEndpoint.java:1054
-    - `作用`：线程池（实际处理网络数据逻辑的线程池）的 maximumPoolSize 参数。
+    - `作用`：默认值1024，线程池（实际处理网络数据逻辑的线程池）的 maximumPoolSize 参数。
 - `maxConnections`
   - `使用位置`：org/apache/tomcat/util/net/Acceptor.java:117
   - `作用`：默认值 8*1024，Acceptor能同时接受的最大连接数。当前socket连接超过maxConnections的时候，Acceptor线程自己会阻塞等待，等连接降下去之后，才去处理Accept队列的下一个连接
@@ -101,16 +104,18 @@ Pipeline只有一个实现类StandardPipeline。
 - 要理解这几个参数最重要的就是看org.apache.tomcat.util.net.NioEndpoint.startInternal()，其实就是一个独立的acceptor线程（阻塞式的accept【org/apache/tomcat/util/net/Acceptor.java:129】），accept之后就注册 READ 事件到poller中。
 - 而核心的线程池【minSpareThreads，maxThreads两个参数就是设置这里的线程池的参数】就是负责消费poller中的读写事件的。所以我目前认为Tomcat的性能瓶颈分析可以从这里入手。
 ![img_8.png](img_8.png)
-- ？？？？TODO：分析线程池，在sleep或者等待IO的时候，线程资源的分配情况。
 
 - socket close 的时候会countDown connectionLimitLatch：getEndpoint().countDownConnection();【org/apache/tomcat/util/net/SocketWrapperBase.java:428】
 - 也就是成功accept一个socket，connectionLimitLatch++或者wait，close一个socket connectionLimitLatch--。
-- websocket是可以同时接受很多的连接的【因为他大部分时候不占用线程资源，但是占用内存资源】
+- websocket是可以同时接受很多的连接的【因为他大部分时候不占用线程资源，但是占用内存资源】，所以maxConnections可以设置的比较大。
+- 为什么 maxThreads 要设这么大，不是CPU只有几个核吗？首先高清楚Tomcat大部分都是IO密集型的操作【servlet需要读取DB、Redis】，等待IO时间长，
+- 那么我们就可以同时处理更多的请求了。当然如果你的web应用不是IO密集型，maxThreads你可以调小一点。相反如果你是IO密集型，但是 maxThreads 给得很小，
+- 那么CPU就只能空转了。至于DB那边能处理多高的并发，就得具体看了。【如果DB那边只有一个线程在工作，你调用方再多线程都没用了，不过像我们公司的MySQL QPS 1W多，多线程还是很有用的】
 
 参考文章：
 - [Tomcat调优及acceptCount、maxConnections与maxThreads参数的含义和关系](https://blog.csdn.net/z69183787/article/details/128817991)
 
-# 如何确定某个请求由哪个 Servlet 负责响应？
+# 如何确定某个请求由哪个 Servlet 负责响应
 > 我们使用逆推的方式，看源码大部分情况下都是逆推。 根据我们的基础知识，我们知道最终决定由哪一个 Wrapper 处理我们的请求是在 Request 的 MappingData 对象的 wrapper 字段中的。 所以我们就得看沿着MappingData的wrapper属性逆向网上找，从而确定整个链路。
 
 1. mappingData.wrapper = wrapper.object;：org/apache/catalina/mapper/Mapper.java:1004
@@ -282,7 +287,7 @@ WsSession是怎么维护的？
 6. 研究细节
 
 ## ConnectionHandler 和 WsFrameServer 对象多
-ws链接越多WsFrameServer就越多，什么情况下会导致WsFrameServer比连接数多很多呢？
+ws链接越多 WsFrameServer 就越多，什么情况下会导致WsFrameServer比连接数多很多呢？
 
 再研究一下HTTP、WS能同时处理多少连接？
 无论是 HTTP还是 WS，都不会一直占用线程的，特别是 WS，处理完一次报文之后，就会把连接【包括socketWrapper，socketWrapper里面又有processor，下次请求进来就可以从poller event中取到所有要用的新】扔回到poller，
@@ -290,7 +295,9 @@ ws链接越多WsFrameServer就越多，什么情况下会导致WsFrameServer比�
 
 证明一下这个事情，很重要
 
-
+# WsFrameServer 对象多，且每个 WsFrameServer占用的内存高
+原因：maxBinaryMessageBufferSize（二进制消息 buffer size）、maxTextMessageBufferSize（文本消息 buffer size）占用内存过大，代码设置了 maxTextMessageBufferSize 为 1000000（我看过代码其实不是 bytes，其实是 buffer 的 capacity）
+PS：如果这次连接不是分批传输的（org/apache/tomcat/websocket/WsFrameBase.java:440）， 且报文大小超过 maxTextMessageBufferSize/maxBinaryMessageBufferSize，就会报错 wsFrame.textMessageTooBig。
 
 ## 为什么tomcat能够加载到 webapps 下的 class 文件
 ParallelWebappClassLoader findClass 会根据类路径到 webapps 下找到改类的 class 二进制流，然后通过 defineClass 创建对应的 class。

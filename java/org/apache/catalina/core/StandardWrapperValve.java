@@ -91,6 +91,7 @@ final class StandardWrapperValve extends ValveBase {
         // This should be a Request attribute...
         long t1 = System.currentTimeMillis();
         requestCount.incrementAndGet();
+
         StandardWrapper wrapper = (StandardWrapper) getContainer();
         Servlet servlet = null;
         Context context = (Context) wrapper.getParent();

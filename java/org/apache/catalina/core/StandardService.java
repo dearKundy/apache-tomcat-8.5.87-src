@@ -437,7 +437,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
             }
         }
 
-        // 处理Host、context、wrapper关联关系【每个Service有一个关联的MapperListener】
+        // 处理 Engine、 Host、context、wrapper关联关系
         mapperListener.start();
 
         // Start our defined Connectors second

@@ -550,7 +550,7 @@ public class Catalina {
         initNaming();
 
         // Create and execute our Digester
-        // Digester的主要功能是将XML文件转换为Java对象，这里只要是将server.xml解析成Digester。
+        // 创建Digester，定义了一个解析 server.xml 文件的框架
         Digester digester = createStartDigester();
 
         InputSource inputSource = null;
